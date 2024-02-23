@@ -11,7 +11,8 @@ const wsStore = useWebsocketStore();
     <main>
         <h1 v-if="wsStore.connectionError">Error: connection failed</h1>
         <div v-else>
-            <JoinRoomWindow  />
+            <JoinRoomWindow v-if="!wsStore.isJoinedRoom" />
+            <div v-else>Joined room <br> <b>{{ wsStore.joinedRoomId  }}</b> </div>
         </div>
     </main>
 </template>

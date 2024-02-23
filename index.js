@@ -1,7 +1,8 @@
 import { WebSocketServer } from "ws";
 import { v4 as uuidv4 } from "uuid";
 
-const wss = new WebSocketServer({ port: 8080 });
+
+const wss = new WebSocketServer({ port: 8081 });
 
 const rooms = {};
 
@@ -21,21 +22,24 @@ wss.on("connection", function connection(ws) {
     if (!("type" in message)) return;
 
     switch (message.type) {
-      case "join":
-        if (!rooms[message.room]) {
+      case "join": {
+        let roomId = message.room_id;
+
+        if (!rooms[roomId]) {
           ws.send(JSON.stringify({ error: "room not found" }));
           break;
         }
 
-        rooms[message.room][connUuid] = ws;
-        ws.send(JSON.stringify({ message: "successfully joined room" }));
+        rooms[roomId][connUuid] = ws;
+        ws.send(JSON.stringify({ type: "joined_room", "room_id": roomId }));
         break;
-      case "create":
+      }
+      case "create": {
         let roomId = "room" + uuidv4();
         rooms[roomId] = { [connUuid]: ws };
-        console.log(rooms);
-        ws.send(JSON.stringify({ roomId: roomId }));
+        ws.send(JSON.stringify({ type: "created_room", "room_id": roomId }));
         break;
+      }
     }
   });
 });

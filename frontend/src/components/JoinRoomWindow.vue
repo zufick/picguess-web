@@ -1,21 +1,19 @@
 <script setup lang="ts">
-import { inject, ref } from 'vue'
-import { storeToRefs } from 'pinia'
-import { useRoomStore } from '@/stores/RoomStore'
+import { ref } from 'vue'
+import { useWebsocketStore } from '@/stores/WebsocketStore';
 
-const roomStore = useRoomStore();
-const { joinRoomId } = storeToRefs(roomStore)
-const { joinRoom } = roomStore
 
+const wsStore = useWebsocketStore();
+const enteredRoomId = ref("")
 </script>
 
 <template>
     <div class="mb-6">
         <p>Join room</p>
         <div class="flex items-center">
-            <input v-model="joinRoomId" type="text" placeholder="Room id">
-            <button @click="joinRoom()">Join</button>
+            <input v-model="enteredRoomId" type="text" placeholder="Room id">
+            <button @click="wsStore.joinRoom(enteredRoomId)">Join</button>
         </div>
     </div>
-    <button>Create room</button>
+    <button @click="wsStore.createRoom()">Create room</button>
 </template>
