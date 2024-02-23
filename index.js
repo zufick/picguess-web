@@ -1,8 +1,10 @@
 import { WebSocketServer } from "ws";
 import { v4 as uuidv4 } from "uuid";
 
+const PORT = 8081;
 
-const wss = new WebSocketServer({ port: 8081 });
+console.log("Starting WebSocketServer at :" + PORT)
+const wss = new WebSocketServer({ port: PORT });
 
 const rooms = {};
 
@@ -30,15 +32,28 @@ wss.on("connection", function connection(ws) {
           break;
         }
 
-        rooms[roomId][connUuid] = ws;
+        rooms[roomId]['users'].push({id: connUuid, socket: ws});
+        ws.roomId = roomId;
         ws.send(JSON.stringify({ type: "joined_room", "room_id": roomId }));
         break;
       }
       case "create": {
         let roomId = "room" + uuidv4();
-        rooms[roomId] = { [connUuid]: ws };
+        rooms[roomId] = { users: [ {id: connUuid, socket: ws} ] };
+        ws.roomId = roomId;
         ws.send(JSON.stringify({ type: "created_room", "room_id": roomId }));
         break;
+      }
+      case "draw": {
+        if(!ws.roomId) { return; }
+        let room = rooms[ws.roomId];
+
+        room.users.forEach(element => {
+          if(element.id == connUuid){
+            return;
+          }
+          element.socket.send(data, { binary: false })
+        });
       }
     }
   });

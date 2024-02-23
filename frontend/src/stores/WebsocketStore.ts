@@ -3,9 +3,10 @@ import { defineStore } from 'pinia'
 export const useWebsocketStore = () => { 
   const innerStore = defineStore('websocket', {
     state: () => ({ 
-      ws: undefined, 
+      ws: undefined as WebSocket | undefined, 
       connectionError: false,
-      joinedRoomId: "", 
+      joinedRoomId: "",
+      canvasRedraw: undefined as Function | undefined,
     }),
     getters: {
       isJoinedRoom(): Boolean {
@@ -48,14 +49,24 @@ export const useWebsocketStore = () => {
               this.joinedRoomId = jsonData.room_id;
               break;
             }
+            case "draw": {
+              this.canvasRedraw?.(jsonData.data);
+              break;
+            }
           }      
         });
       },
+      setCanvas(canvas: any) {
+        this.canvasRedraw = canvas;
+      },
       joinRoom(roomId: String) {
-        this.ws.send(JSON.stringify({type: "join", room_id: roomId}))
+        this.ws?.send(JSON.stringify({type: "join", room_id: roomId}))
       },
       createRoom() {
-        this.ws.send(JSON.stringify({type: "create"}))
+        this.ws?.send(JSON.stringify({type: "create"}))
+      },
+      sendDraw(data: any) {
+        this.ws?.send(JSON.stringify({type: "draw", data}))
       }
     },
   });
