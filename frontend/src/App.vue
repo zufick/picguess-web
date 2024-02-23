@@ -9,7 +9,7 @@ const wsStore = useWebsocketStore();
 
 <template>
     <main>
-        <h1 v-if="wsStore.connectionError">ERROR</h1>
+        <h1 v-if="wsStore.connectionError">Error: connection failed</h1>
         <div v-else>
             <JoinRoomWindow  />
         </div>

@@ -1,5 +1,5 @@
-/*@tailwind base;*/
-/*@tailwind components;*/
+@tailwind base;
+@tailwind components;
 @tailwind utilities;
 
 body {
@@ -25,4 +25,12 @@ body {
     grid-template-columns: 1fr 1fr;
     padding: 0 2rem;
   }
+}
+
+button {
+  @apply rounded-md border-2 border-stone-700 active:border-stone-400 px-4 py-2 bg-stone-900 hover:bg-stone-800 md:text-lg xl:text-base text-white leading-tight shadow-md;
+}
+
+input {
+  @apply rounded-md border-2 border-stone-700 focus:border-stone-400 focus:outline-none px-4 py-2 bg-stone-500 text-white;
 }

@@ -12,7 +12,7 @@ const { joinRoom } = roomStore
 <template>
     <div class="mb-6">
         <p>Join room</p>
-        <div class="flex">
+        <div class="flex items-center">
             <input v-model="joinRoomId" type="text" placeholder="Room id">
             <button @click="joinRoom()">Join</button>
         </div>
