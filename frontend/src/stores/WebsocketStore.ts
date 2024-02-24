@@ -50,6 +50,10 @@ export const useWebsocketStore = () => {
               this.joinedRoomId = jsonData.room_id;
               break;
             }
+            case "draw_new": {
+              
+              break;
+            }
             case "draw": {
               this.canvasRedraw?.(jsonData.data);
               break;
@@ -70,6 +74,9 @@ export const useWebsocketStore = () => {
       },
       createRoom() {
         this.ws?.send(JSON.stringify({type: "create"}))
+      },
+      sendDrawNewLine(data: any) {
+        this.ws?.send(JSON.stringify({type: "draw_new", data}))
       },
       sendDraw(data: any) {
         this.ws?.send(JSON.stringify({type: "draw", data}))

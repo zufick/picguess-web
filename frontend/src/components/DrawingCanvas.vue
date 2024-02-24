@@ -6,7 +6,37 @@ const wsStore = useWebsocketStore();
 const drawingCanvas = ref<InstanceType<typeof HTMLCanvasElement>>();
 const drawColor = ref("#ffffff")
 const drawWidth = ref(5)
-let isMouseDown = false;
+
+const virtualCanvas: VirtualCanvas = {
+    lines: {
+        "aaa": [
+            {
+                color: "red",
+                width: 1,
+                points: [
+                    { x: 1, y: 1}
+                ]
+            }
+        ],
+    },
+    startNewLine(id: string, data: { color: string, width: string, lines: [] }) {
+        this.lines[id].push(data);
+    },
+}
+
+type VirtualCanvas = {
+    lines: {
+        [key: string] : {
+            color: string,
+            width: number,
+            points: { 
+                x: number, 
+                y: number 
+            }[]
+        }[]
+    },
+    startNewLine: Function,
+};
 
 type DrawData = {
     x: number;
@@ -14,6 +44,8 @@ type DrawData = {
     color?: string;
     width?: number;
 }
+
+let isMouseDown = false;
 
 function mouseMove(event: MouseEvent) {
     if(!isMouseDown) { return; }
@@ -30,11 +62,19 @@ function mouseMove(event: MouseEvent) {
     wsStore.sendDraw(drawData)
 }
 
-function mousedown(event: any) {
+function mouseDown(event: any) {
     isMouseDown = true;
+
+    virtualCanvas["local"].push({
+        color: drawColor.value,
+        width: drawWidth.value,
+        points: []
+    })
+
+    wsStore.sendDrawNewLine();
 }
 
-function mouseup(event: any) {
+function mouseUp(event: any) {
     isMouseDown = false;
     let ctx = drawingCanvas.value?.getContext("2d");
     ctx?.beginPath();
@@ -66,6 +106,6 @@ wsStore.setCanvasFunctions(redrawCanvas, drawStop)
             <input v-model="drawColor" value="#ffffff" type="color">
             <input v-model="drawWidth" type="range" min="1" max="50" value="5">
         </div>
-        <canvas ref="drawingCanvas" height="400" width="600" @mousemove="mouseMove" @mousedown="mousedown" @mouseup="mouseup"></canvas>
+        <canvas ref="drawingCanvas" height="400" width="600" @mousemove="mouseMove" @mousedown="mouseDown" @mouseup="mouseUp"></canvas>
     </div>
 </template>

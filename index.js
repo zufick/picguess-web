@@ -44,11 +44,23 @@ wss.on("connection", function connection(ws) {
         ws.send(JSON.stringify({ type: "created_room", "room_id": roomId }));
         break;
       }
+      case "draw_new": {
+        if(!ws.roomId) { return; }
+        let room = rooms[ws.roomId];
+
+        room.users.forEach((element, index) => {
+          if(element.id == connUuid){
+            return;
+          }
+          element.socket.send(JSON.stringify({"id": index, "data": data}), { binary: false })
+        });
+        break;
+      }
       case "draw": {
         if(!ws.roomId) { return; }
         let room = rooms[ws.roomId];
 
-        room.users.forEach(element => {
+        room.users.forEach((element, index) => {
           if(element.id == connUuid){
             return;
           }
