@@ -7,6 +7,7 @@ export const useWebsocketStore = () => {
       connectionError: false,
       joinedRoomId: "",
       canvasRedraw: undefined as Function | undefined,
+      canvasDrawStop: undefined as Function | undefined,
     }),
     getters: {
       isJoinedRoom(): Boolean {
@@ -53,11 +54,16 @@ export const useWebsocketStore = () => {
               this.canvasRedraw?.(jsonData.data);
               break;
             }
+            case "drawstop": {
+              this.canvasDrawStop?.();
+              break;
+            }
           }      
         });
       },
-      setCanvas(canvas: any) {
-        this.canvasRedraw = canvas;
+      setCanvasFunctions(redraw: any, stop: any) {
+        this.canvasRedraw = redraw;
+        this.canvasDrawStop = stop;
       },
       joinRoom(roomId: String) {
         this.ws?.send(JSON.stringify({type: "join", room_id: roomId}))
@@ -67,6 +73,9 @@ export const useWebsocketStore = () => {
       },
       sendDraw(data: any) {
         this.ws?.send(JSON.stringify({type: "draw", data}))
+      },
+      sendDrawStop() {
+        this.ws?.send(JSON.stringify({type: "drawstop"}))
       }
     },
   });

@@ -12,10 +12,11 @@ const wsStore = useWebsocketStore();
         <h1 v-if="wsStore.connectionError">Error: connection failed</h1>
         <div v-else>
             <JoinRoomWindow v-if="!wsStore.isJoinedRoom" />
-            <div v-else>Joined room <br> <b>{{ wsStore.joinedRoomId  }}</b> </div>
+            <div v-else>
+                <p>Joined room <br> <b>{{ wsStore.joinedRoomId  }}</b></p>
+                <DrawingCanvas />
+            </div>
         </div>
-
-        <DrawingCanvas />
     </main>
 </template>
 
