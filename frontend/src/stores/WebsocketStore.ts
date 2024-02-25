@@ -58,6 +58,14 @@ export const useWebsocketStore = () => {
               this.virtualCanvas?.drawPoint(jsonData.id, jsonData.point);
               break;
             }
+            case "draw_undo": {
+              this.virtualCanvas?.undoLine(jsonData.id);
+              break;
+            }
+            case "draw_redo": {
+              this.virtualCanvas?.redoLine(jsonData.id);
+              break;
+            }
           }      
         });
       },
@@ -75,6 +83,12 @@ export const useWebsocketStore = () => {
       },
       sendDrawPoint(point: { x: number, y: number }) {
         this.ws?.send(JSON.stringify({type: "draw_xy", point}))
+      },
+      sendDrawUndo(){
+        this.ws?.send(JSON.stringify({type: "draw_undo"}))
+      },
+      sendDrawRedo(){
+        this.ws?.send(JSON.stringify({type: "draw_redo"}))
       },
     },
   });

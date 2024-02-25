@@ -57,6 +57,8 @@ wss.on("connection", function connection(ws) {
         });
         break;
       }
+      case "draw_undo":
+      case "draw_redo":
       case "draw_xy": {
         if(!ws.roomId) { return; }
         let room = rooms[ws.roomId];

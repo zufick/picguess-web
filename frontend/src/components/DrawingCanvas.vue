@@ -15,6 +15,7 @@ const drawWidth = ref(5)
 const virtualCanvas: VirtualCanvas = {
     canvas: undefined,
     lines: {},
+    undoLines: {},
     setCanvas(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
     },
@@ -26,15 +27,14 @@ const virtualCanvas: VirtualCanvas = {
         let totalLayers = Object.values(this.lines).flat(1).length
         data.layerIndex = totalLayers
         this.lines[id].push(data);
+
+        if (this.undoLines[id] != undefined) {
+            this.undoLines[id] = []
+            console.log(this.undoLines)
+        }
     },
     startNewLocalLine(data: VirtualCanvasLineData) {
-        if (this.lines["local"] == undefined) {
-            this.lines["local"] = []
-        }
-
-        let totalLayers = Object.values(this.lines).flat(1).length
-        data.layerIndex = totalLayers
-        this.lines["local"].push(data);
+        this.startNewLine("local", data)
     },
     drawLocalPoint(point: VirtualCanvasDrawPoint) {
         this.drawPoint("local", point)
@@ -50,6 +50,7 @@ const virtualCanvas: VirtualCanvas = {
     },
     redrawCanvas() {
         let ctx = this.canvas?.getContext("2d");
+        ctx!.clearRect(0, 0, this.canvas!.width, this.canvas!.height);
 
         let lines = Object.values(this.lines).flat(1)
         lines.sort((a,b) => a.layerIndex! - b.layerIndex!)
@@ -66,26 +67,36 @@ const virtualCanvas: VirtualCanvas = {
             ctx?.stroke();
             ctx?.beginPath();
         });
+    },
+    undoLine(id: string) {
+        if(this.lines[id] == undefined) {
+            return;
+        }
+        if(this.undoLines[id] == undefined) {
+            this.undoLines[id] = [];
+        }
 
-        /*for (const [userLineKey, userLines] of Object.entries(this.lines)) {
-            for (const [lineKey, line] of Object.entries(userLines)) {
-                ctx!.lineWidth = line.width;
-                ctx!.lineCap = "round";
-                ctx!.strokeStyle = line.color;
-                
-                line.points.forEach(point => {
-                    ctx?.lineTo(point.x, point.y);
-                });
-                ctx?.stroke();
-                ctx?.beginPath();
-            }
-        }*/
+        let line = this.lines[id].pop()!;
+        if (line != undefined) {
+            this.undoLines[id].push(line);
+        }
 
-        //ctx!.lineWidth = data.width!;
-        //ctx!.lineCap = "round";
-        //ctx!.strokeStyle = data.color!;
-        //ctx?.lineTo(data.x, data.y);
-        //ctx?.stroke();
+        this.redrawCanvas();
+    },
+    redoLine(id: string) {
+        if(this.undoLines[id] == undefined) {
+            return;
+        }
+        if(this.lines[id] == undefined) {
+            this.lines[id] = [];
+        }
+
+        let line = this.undoLines[id].pop()!;
+        if (line != undefined) {
+            this.lines[id].push(line);
+        }
+
+        this.redrawCanvas();
     },
 }
 
@@ -101,15 +112,7 @@ let isMouseDown = false;
 function mouseMove(event: MouseEvent) {
     if(!isMouseDown) { return; }
 
-    let rect = drawingCanvas.value?.getBoundingClientRect();
-    let point = { 
-        x: event.clientX - (rect?.left ?? 0),
-        y: event.clientY - (rect?.top ?? 0),
-    }
-
-    //redrawCanvas(drawData, true)
-    virtualCanvas.drawLocalPoint(point)
-    wsStore.sendDrawPoint(point)
+    drawEventPoint(event);
 }
 
 function mouseDown(event: any) {
@@ -125,6 +128,19 @@ function mouseDown(event: any) {
         color: drawColor.value, 
         width: drawWidth.value 
     });
+
+    drawEventPoint(event);
+}
+
+function drawEventPoint(event: any) {
+    let rect = drawingCanvas.value?.getBoundingClientRect();
+    let point = { 
+        x: event.clientX - (rect?.left ?? 0),
+        y: event.clientY - (rect?.top ?? 0),
+    }
+
+    virtualCanvas.drawLocalPoint(point)
+    wsStore.sendDrawPoint(point)
 }
 
 function mouseUp(event: any) {
@@ -132,14 +148,16 @@ function mouseUp(event: any) {
     let ctx = drawingCanvas.value?.getContext("2d");
 }
 
-function redrawCanvas(data: DrawData, isLocal = false) {
-    let ctx = drawingCanvas.value?.getContext("2d");
-    ctx!.lineWidth = data.width!;
-    ctx!.lineCap = "round";
-    ctx!.strokeStyle = data.color!;
-    ctx?.lineTo(data.x, data.y);
-    ctx?.stroke();
+function undoClicked() {
+    virtualCanvas.undoLine("local");
+    wsStore.sendDrawUndo();
 }
+
+function redoClicked() {
+    virtualCanvas.redoLine("local");
+    wsStore.sendDrawRedo();
+}
+
 
 wsStore.setVirtualCanvas(virtualCanvas)
 
@@ -154,6 +172,8 @@ onMounted(() => {
         <div>
             <input v-model="drawColor" value="#ffffff" type="color">
             <input v-model="drawWidth" type="range" min="1" max="50" value="5">
+            <button @click="undoClicked">⬅️</button>
+            <button @click="redoClicked">➡️</button>
         </div>
         <canvas ref="drawingCanvas" height="400" width="600" @mousemove="mouseMove" @mousedown="mouseDown" @mouseup="mouseUp"></canvas>
     </div>
