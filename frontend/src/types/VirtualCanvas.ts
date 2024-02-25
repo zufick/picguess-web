@@ -4,6 +4,7 @@ export type VirtualCanvas = {
         [key: string] : { // Key is user index in current room
             color: string,
             width: number,
+            layerIndex?: number,
             points: { 
                 x: number, 
                 y: number 
@@ -18,6 +19,6 @@ export type VirtualCanvas = {
     redrawCanvas: () => void,
 };
 
-export type VirtualCanvasLineData = { color: string, width: number, points: [] };
+export type VirtualCanvasLineData = { color: string, width: number, points: [], layerIndex?: number };
 
 export type VirtualCanvasDrawPoint = { x: number, y: number };

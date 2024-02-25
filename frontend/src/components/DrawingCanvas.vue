@@ -22,12 +22,18 @@ const virtualCanvas: VirtualCanvas = {
         if (this.lines[id] == undefined) {
             this.lines[id] = []
         }
+
+        let totalLayers = Object.values(this.lines).flat(1).length
+        data.layerIndex = totalLayers
         this.lines[id].push(data);
     },
     startNewLocalLine(data: VirtualCanvasLineData) {
         if (this.lines["local"] == undefined) {
             this.lines["local"] = []
         }
+
+        let totalLayers = Object.values(this.lines).flat(1).length
+        data.layerIndex = totalLayers
         this.lines["local"].push(data);
     },
     drawLocalPoint(point: VirtualCanvasDrawPoint) {
@@ -45,7 +51,23 @@ const virtualCanvas: VirtualCanvas = {
     redrawCanvas() {
         let ctx = this.canvas?.getContext("2d");
 
-        for (const [userLineKey, userLines] of Object.entries(this.lines)) {
+        let lines = Object.values(this.lines).flat(1)
+        lines.sort((a,b) => a.layerIndex! - b.layerIndex!)
+        lines.forEach(line => {
+            ctx!.lineWidth = line.width;
+            ctx!.lineCap = "round";
+            ctx!.strokeStyle = line.color;
+            
+            if (line.points != undefined) {
+                line.points.forEach(point => {
+                    ctx?.lineTo(point.x, point.y);
+                });
+            }
+            ctx?.stroke();
+            ctx?.beginPath();
+        });
+
+        /*for (const [userLineKey, userLines] of Object.entries(this.lines)) {
             for (const [lineKey, line] of Object.entries(userLines)) {
                 ctx!.lineWidth = line.width;
                 ctx!.lineCap = "round";
@@ -57,7 +79,7 @@ const virtualCanvas: VirtualCanvas = {
                 ctx?.stroke();
                 ctx?.beginPath();
             }
-        }
+        }*/
 
         //ctx!.lineWidth = data.width!;
         //ctx!.lineCap = "round";
