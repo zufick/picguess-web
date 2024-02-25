@@ -58,10 +58,6 @@ export const useWebsocketStore = () => {
               this.virtualCanvas?.drawPoint(jsonData.id, jsonData.point);
               break;
             }
-            case "drawstop": {
-              //this.canvasDrawStop?.();
-              break;
-            }
           }      
         });
       },

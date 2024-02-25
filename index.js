@@ -70,18 +70,6 @@ wss.on("connection", function connection(ws) {
         });
         break;
       }
-      case "drawstop": {
-        if(!ws.roomId) { return; }
-        let room = rooms[ws.roomId];
-
-        room.users.forEach(element => {
-          if(element.id == connUuid){
-            return;
-          }
-          element.socket.send(JSON.stringify({"type": "drawstop"}), { binary: false })
-        });
-        break;
-      }
     }
   });
 });
