@@ -1,6 +1,11 @@
 <script setup lang="ts">
+import { onMounted, ref } from "vue";
 import { useWebsocketStore } from "@/stores/WebsocketStore";
-import { ref } from "vue";
+import type { 
+    VirtualCanvas, 
+    VirtualCanvasLineData, 
+    VirtualCanvasDrawPoint 
+} from '@/types/VirtualCanvas'
 
 const wsStore = useWebsocketStore();
 const drawingCanvas = ref<InstanceType<typeof HTMLCanvasElement>>();
@@ -8,35 +13,59 @@ const drawColor = ref("#ffffff")
 const drawWidth = ref(5)
 
 const virtualCanvas: VirtualCanvas = {
-    lines: {
-        "aaa": [
-            {
-                color: "red",
-                width: 1,
-                points: [
-                    { x: 1, y: 1}
-                ]
-            }
-        ],
+    canvas: undefined,
+    lines: {},
+    setCanvas(canvas: HTMLCanvasElement) {
+        this.canvas = canvas;
     },
-    startNewLine(id: string, data: { color: string, width: string, lines: [] }) {
+    startNewLine(id: string, data: VirtualCanvasLineData) {
+        if (this.lines[id] == undefined) {
+            this.lines[id] = []
+        }
         this.lines[id].push(data);
     },
-}
-
-type VirtualCanvas = {
-    lines: {
-        [key: string] : {
-            color: string,
-            width: number,
-            points: { 
-                x: number, 
-                y: number 
-            }[]
-        }[]
+    startNewLocalLine(data: VirtualCanvasLineData) {
+        if (this.lines["local"] == undefined) {
+            this.lines["local"] = []
+        }
+        this.lines["local"].push(data);
     },
-    startNewLine: Function,
-};
+    drawLocalPoint(point: VirtualCanvasDrawPoint) {
+        this.drawPoint("local", point)
+    },
+    drawPoint(id: string, point: VirtualCanvasDrawPoint) {
+        let line = this.lines[id];
+        if(line[line.length - 1].points == undefined) {
+            line[line.length - 1].points = [];
+        }
+        line[line.length - 1].points.push(point);
+
+        this.redrawCanvas();
+    },
+    redrawCanvas() {
+        let ctx = this.canvas?.getContext("2d");
+
+        for (const [userLineKey, userLines] of Object.entries(this.lines)) {
+            for (const [lineKey, line] of Object.entries(userLines)) {
+                ctx!.lineWidth = line.width;
+                ctx!.lineCap = "round";
+                ctx!.strokeStyle = line.color;
+                
+                line.points.forEach(point => {
+                    ctx?.lineTo(point.x, point.y);
+                });
+                ctx?.stroke();
+                ctx?.beginPath();
+            }
+        }
+
+        //ctx!.lineWidth = data.width!;
+        //ctx!.lineCap = "round";
+        //ctx!.strokeStyle = data.color!;
+        //ctx?.lineTo(data.x, data.y);
+        //ctx?.stroke();
+    },
+}
 
 type DrawData = {
     x: number;
@@ -51,34 +80,34 @@ function mouseMove(event: MouseEvent) {
     if(!isMouseDown) { return; }
 
     let rect = drawingCanvas.value?.getBoundingClientRect();
-    let drawData = { 
+    let point = { 
         x: event.clientX - (rect?.left ?? 0),
         y: event.clientY - (rect?.top ?? 0),
-        color: drawColor.value,
-        width: drawWidth.value
     }
 
-    redrawCanvas(drawData, true)
-    wsStore.sendDraw(drawData)
+    //redrawCanvas(drawData, true)
+    virtualCanvas.drawLocalPoint(point)
+    wsStore.sendDrawPoint(point)
 }
 
 function mouseDown(event: any) {
     isMouseDown = true;
-
-    virtualCanvas["local"].push({
+    
+    virtualCanvas.startNewLocalLine({
         color: drawColor.value,
         width: drawWidth.value,
         points: []
     })
 
-    wsStore.sendDrawNewLine();
+    wsStore.sendDrawNewLine({ 
+        color: drawColor.value, 
+        width: drawWidth.value 
+    });
 }
 
 function mouseUp(event: any) {
     isMouseDown = false;
     let ctx = drawingCanvas.value?.getContext("2d");
-    ctx?.beginPath();
-    wsStore.sendDrawStop();
 }
 
 function redrawCanvas(data: DrawData, isLocal = false) {
@@ -90,13 +119,11 @@ function redrawCanvas(data: DrawData, isLocal = false) {
     ctx?.stroke();
 }
 
-function drawStop() {
-    let ctx = drawingCanvas.value?.getContext("2d");
-    ctx?.beginPath();
-    console.log("draw stop")
-}
+wsStore.setVirtualCanvas(virtualCanvas)
 
-wsStore.setCanvasFunctions(redrawCanvas, drawStop)
+onMounted(() => {
+    virtualCanvas.setCanvas(drawingCanvas.value!)
+})
 </script>
 
 

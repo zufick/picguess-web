@@ -1,3 +1,4 @@
+import type { VirtualCanvas } from '@/types/VirtualCanvas';
 import { defineStore } from 'pinia'
 
 export const useWebsocketStore = () => { 
@@ -6,8 +7,7 @@ export const useWebsocketStore = () => {
       ws: undefined as WebSocket | undefined, 
       connectionError: false,
       joinedRoomId: "",
-      canvasRedraw: undefined as Function | undefined,
-      canvasDrawStop: undefined as Function | undefined,
+      virtualCanvas: undefined as VirtualCanvas | undefined,
     }),
     getters: {
       isJoinedRoom(): Boolean {
@@ -51,23 +51,22 @@ export const useWebsocketStore = () => {
               break;
             }
             case "draw_new": {
-              
+              this.virtualCanvas?.startNewLine(jsonData.id, jsonData.data)
               break;
             }
-            case "draw": {
-              this.canvasRedraw?.(jsonData.data);
+            case "draw_xy": {
+              this.virtualCanvas?.drawPoint(jsonData.id, jsonData.point);
               break;
             }
             case "drawstop": {
-              this.canvasDrawStop?.();
+              //this.canvasDrawStop?.();
               break;
             }
           }      
         });
       },
-      setCanvasFunctions(redraw: any, stop: any) {
-        this.canvasRedraw = redraw;
-        this.canvasDrawStop = stop;
+      setVirtualCanvas(canvas: VirtualCanvas) {
+        this.virtualCanvas = canvas;
       },
       joinRoom(roomId: String) {
         this.ws?.send(JSON.stringify({type: "join", room_id: roomId}))
@@ -75,15 +74,12 @@ export const useWebsocketStore = () => {
       createRoom() {
         this.ws?.send(JSON.stringify({type: "create"}))
       },
-      sendDrawNewLine(data: any) {
+      sendDrawNewLine(data: { color: string, width: number }) {
         this.ws?.send(JSON.stringify({type: "draw_new", data}))
       },
-      sendDraw(data: any) {
-        this.ws?.send(JSON.stringify({type: "draw", data}))
+      sendDrawPoint(point: { x: number, y: number }) {
+        this.ws?.send(JSON.stringify({type: "draw_xy", point}))
       },
-      sendDrawStop() {
-        this.ws?.send(JSON.stringify({type: "drawstop"}))
-      }
     },
   });
 

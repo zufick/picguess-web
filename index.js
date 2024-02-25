@@ -52,11 +52,12 @@ wss.on("connection", function connection(ws) {
           if(element.id == connUuid){
             return;
           }
-          element.socket.send(JSON.stringify({"id": index, "data": data}), { binary: false })
+          message.id = index;
+          element.socket.send(JSON.stringify(message), { binary: false })
         });
         break;
       }
-      case "draw": {
+      case "draw_xy": {
         if(!ws.roomId) { return; }
         let room = rooms[ws.roomId];
 
@@ -64,7 +65,8 @@ wss.on("connection", function connection(ws) {
           if(element.id == connUuid){
             return;
           }
-          element.socket.send(data, { binary: false })
+          message.id = index;
+          element.socket.send(JSON.stringify(message), { binary: false })
         });
         break;
       }
