@@ -39,9 +39,9 @@ export const useWebsocketStore = () => {
             return;
           }
 
-          if (!("type" in jsonData)) return;
+          if (!("cmd" in jsonData)) return;
 
-          switch (jsonData.type) {
+          switch (jsonData.cmd) {
             case "created_room": {
               this.joinedRoomId = jsonData.room_id;
               break;
@@ -73,22 +73,22 @@ export const useWebsocketStore = () => {
         this.virtualCanvas = canvas;
       },
       joinRoom(roomId: String) {
-        this.ws?.send(JSON.stringify({type: "join", room_id: roomId}))
+        this.ws?.send(JSON.stringify({cmd: "join", room_id: roomId}))
       },
       createRoom() {
-        this.ws?.send(JSON.stringify({type: "create"}))
+        this.ws?.send(JSON.stringify({cmd: "create"}))
       },
       sendDrawNewLine(data: { color: string, width: number }) {
-        this.ws?.send(JSON.stringify({type: "draw_new", data}))
+        this.ws?.send(JSON.stringify({cmd: "draw_new", data}))
       },
       sendDrawPoint(point: { x: number, y: number }) {
-        this.ws?.send(JSON.stringify({type: "draw_xy", point}))
+        this.ws?.send(JSON.stringify({cmd: "draw_xy", point}))
       },
       sendDrawUndo(){
-        this.ws?.send(JSON.stringify({type: "draw_undo"}))
+        this.ws?.send(JSON.stringify({cmd: "draw_undo"}))
       },
       sendDrawRedo(){
-        this.ws?.send(JSON.stringify({type: "draw_redo"}))
+        this.ws?.send(JSON.stringify({cmd: "draw_redo"}))
       },
     },
   });
