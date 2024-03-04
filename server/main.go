@@ -12,7 +12,7 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-const PORT = ":8090"
+const PORT = ":8081"
 
 func main() {
 	fmt.Printf("Starting http server at %s\n", PORT)
@@ -31,7 +31,7 @@ func main() {
 		Addr: PORT,
 	}
 
-	http.HandleFunc("/ws", ws.Handler)
+	http.HandleFunc("/", ws.Handler)
 
 	g, gCtx := errgroup.WithContext(ctx)
 	g.Go(func() error {

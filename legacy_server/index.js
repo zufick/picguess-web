@@ -21,9 +21,9 @@ wss.on("connection", function connection(ws) {
       console.error(e);
       return;
     }
-    if (!("type" in message)) return;
+    if (!("cmd" in message)) return;
 
-    switch (message.type) {
+    switch (message.cmd) {
       case "join": {
         let roomId = message.room_id;
 
@@ -34,14 +34,14 @@ wss.on("connection", function connection(ws) {
 
         rooms[roomId]['users'].push({id: connUuid, socket: ws});
         ws.roomId = roomId;
-        ws.send(JSON.stringify({ type: "joined_room", "room_id": roomId }));
+        ws.send(JSON.stringify({ cmd: "joined_room", "room_id": roomId }));
         break;
       }
       case "create": {
         let roomId = "room" + uuidv4();
         rooms[roomId] = { users: [ {id: connUuid, socket: ws} ] };
         ws.roomId = roomId;
-        ws.send(JSON.stringify({ type: "created_room", "room_id": roomId }));
+        ws.send(JSON.stringify({ cmd: "created_room", "room_id": roomId }));
         break;
       }
       case "draw_new": {

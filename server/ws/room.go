@@ -1,10 +1,17 @@
 package ws
 
 import (
+	"encoding/json"
+	"fmt"
 	"log"
 
 	"github.com/google/uuid"
 )
+
+type BroadcastInfo struct {
+	Sender int
+	Data   []byte
+}
 
 type Room struct {
 	id string
@@ -13,7 +20,7 @@ type Room struct {
 	clients map[*Client]bool
 
 	// Inbound messages from the clients.
-	broadcast chan []byte
+	broadcast chan BroadcastInfo
 
 	// Register requests from the clients.
 	register chan *Client
@@ -23,6 +30,7 @@ type Room struct {
 }
 
 var rooms = make(map[string]*Room)
+var lastUserIdInRoom = 0
 
 func newRoom() *Room {
 	id, err := uuid.NewUUID()
@@ -32,33 +40,50 @@ func newRoom() *Room {
 
 	room := &Room{
 		id:         id.String(),
-		broadcast:  make(chan []byte),
+		broadcast:  make(chan BroadcastInfo),
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
 		clients:    make(map[*Client]bool),
 	}
-	room.run()
+	go room.run()
 	rooms[room.id] = room
 	return room
 }
 
-func (h *Room) run() {
+func (r *Room) run() {
 	for {
 		select {
-		case client := <-h.register:
-			h.clients[client] = true
-		case client := <-h.unregister:
-			if _, ok := h.clients[client]; ok {
-				delete(h.clients, client)
+		case client := <-r.register:
+			r.clients[client] = true
+		case client := <-r.unregister:
+			if _, ok := r.clients[client]; ok {
+				delete(r.clients, client)
 				close(client.send)
 			}
-		case message := <-h.broadcast:
-			for client := range h.clients {
+		case message := <-r.broadcast:
+			var messageMap map[string]json.RawMessage
+			err := json.Unmarshal(message.Data, &messageMap)
+			if err != nil {
+				fmt.Println(err)
+			}
+			messageMap["id"] = json.RawMessage(fmt.Sprintf("\"%d\"", message.Sender))
+
+			messageWithSender, err := json.Marshal(&messageMap)
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			for client := range r.clients {
+
+				if client.id == message.Sender {
+					continue
+				}
+
 				select {
-				case client.send <- message:
+				case client.send <- messageWithSender:
 				default:
 					close(client.send)
-					delete(h.clients, client)
+					delete(r.clients, client)
 				}
 			}
 		}
