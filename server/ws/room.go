@@ -68,6 +68,7 @@ func (r *Room) run() {
 				delete(r.clients, client)
 				close(client.send)
 			}
+			go r.broadcastGameState()
 		case message := <-r.broadcastFromClient:
 			var messageMap map[string]json.RawMessage
 			err := json.Unmarshal(message.Data, &messageMap)
