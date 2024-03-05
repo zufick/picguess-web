@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import JoinRoomWindow from './components/JoinRoomWindow.vue'
 import DrawingCanvas from './components/DrawingCanvas.vue'
+import UserList from './components/UserList.vue'
 import { useWebsocketStore } from './stores/WebsocketStore';
 
 const wsStore = useWebsocketStore();
@@ -14,6 +15,7 @@ const wsStore = useWebsocketStore();
             <JoinRoomWindow v-if="!wsStore.isJoinedRoom" />
             <div v-else>
                 <p>Joined room <br> <b>{{ wsStore.joinedRoomId  }}</b></p>
+                <UserList/>
                 <DrawingCanvas />
             </div>
         </div>

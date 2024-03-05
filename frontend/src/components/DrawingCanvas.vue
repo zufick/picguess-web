@@ -172,9 +172,17 @@ onMounted(() => {
         <div>
             <input v-model="drawColor" value="#ffffff" type="color">
             <input v-model="drawWidth" type="range" min="1" max="50" value="5">
-            <button @click="undoClicked">⬅️</button>
-            <button @click="redoClicked">➡️</button>
+            <button @click="undoClicked">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 15.75 3 12m0 0 3.75-3.75M3 12h18" />
+                </svg>
+            </button>
+            <button @click="redoClicked">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 8.25 21 12m0 0-3.75 3.75M21 12H3" />
+                </svg>
+            </button>
         </div>
-        <canvas ref="drawingCanvas" height="400" width="600" @mousemove="mouseMove" @mousedown="mouseDown" @mouseup="mouseUp"></canvas>
+        <canvas class="border-2 rounded-lg border-white/20" ref="drawingCanvas" height="768" width="1024" @mousemove="mouseMove" @mousedown="mouseDown" @mouseup="mouseUp"></canvas>
     </div>
 </template>

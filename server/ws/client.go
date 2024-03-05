@@ -15,6 +15,8 @@ type Client struct {
 
 	// Buffered channel of outbound messages.
 	send chan []byte
+
+	userInfo UserInfo
 }
 
 func NewClient(conn *websocket.Conn) *Client {
@@ -26,16 +28,16 @@ func NewClient(conn *websocket.Conn) *Client {
 	}
 }
 
-func (c *Client) JoinRoomById(roomId string) error {
+func (c *Client) JoinRoomById(roomId string, userInfo UserInfo) error {
 	if rooms[roomId] == nil {
 		return errors.New("Room not found")
 	}
+	lastUserIdInRoom++
+	c.id = lastUserIdInRoom
+	c.userInfo = userInfo
 
 	c.room = rooms[roomId]
 	c.room.register <- c
-
-	lastUserIdInRoom++
-	c.id = lastUserIdInRoom
 
 	return nil
 }

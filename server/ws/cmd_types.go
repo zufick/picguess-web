@@ -1,5 +1,7 @@
 package ws
 
+import "game-server/game"
+
 const (
 	MessageCmdCreate    = "create"
 	MessageCmdJoin      = "join"
@@ -9,13 +11,24 @@ const (
 	MessageCmdDraw_undo = "draw_undo"
 )
 
+type UserInfo struct {
+	Id       string `json:"id"`
+	Username string `json:"username"`
+}
+
 type JsonMessageCmd struct {
 	Cmd string `json:"cmd"`
 }
 
+type JsonMessageCmdCreate struct {
+	Cmd      string   `json:"cmd"`
+	UserInfo UserInfo `json:"user_info"`
+}
+
 type JsonMessageCmdJoin struct {
-	Cmd    string `json:"cmd"`
-	RoomId string `json:"room_id"`
+	Cmd      string   `json:"cmd"`
+	RoomId   string   `json:"room_id"`
+	UserInfo UserInfo `json:"user_info"`
 }
 
 // Draws a new line
@@ -33,4 +46,10 @@ type JsonMessageCmdDraw_xy struct {
 		X int `json:"x"`
 		Y int `json:"y"`
 	} `json:"point"`
+}
+
+type RoomStateBroadcastData struct {
+	Cmd         string     `json:"cmd"`
+	Game        *game.Game `json:"game"`
+	ClientInfos []UserInfo `json:"clients"`
 }

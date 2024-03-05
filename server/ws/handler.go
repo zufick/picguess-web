@@ -74,6 +74,7 @@ func (c *Client) writePump() {
 	for {
 		select {
 		case message, ok := <-c.send:
+
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
 				// The hub closed the channel.
@@ -114,7 +115,9 @@ func (c *Client) messageHandler(conn *websocket.Conn, rawMessage []byte) {
 
 	switch message["cmd"] {
 	case MessageCmdCreate:
-		createRoomHandler(c)
+		var data JsonMessageCmdCreate
+		json.Unmarshal(rawMessage, &data)
+		createRoomHandler(c, &data)
 	case MessageCmdJoin:
 		var data JsonMessageCmdJoin
 		json.Unmarshal(rawMessage, &data)
@@ -123,32 +126,24 @@ func (c *Client) messageHandler(conn *websocket.Conn, rawMessage []byte) {
 		MessageCmdDraw_xy,
 		MessageCmdDraw_undo,
 		MessageCmdDraw_redo:
-		c.room.broadcast <- BroadcastInfo{Sender: c.id, Data: rawMessage}
+		c.room.broadcastFromClient <- BroadcastSenderInfo{Sender: c.id, Data: rawMessage}
 	}
 }
 
-func createRoomHandler(c *Client) {
+func createRoomHandler(c *Client, m *JsonMessageCmdCreate) {
 	room := newRoom()
 
-	if err := c.JoinRoomById(room.id); err != nil {
+	if err := c.JoinRoomById(room.id, m.UserInfo); err != nil {
 		return
 	}
 
-	if err := c.conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("{ \"cmd\": \"created_room\", \"room_id\": \"%s\" }", room.id))); err != nil {
-		log.Println(err)
-		return
-	}
-
+	c.send <- []byte(fmt.Sprintf("{ \"cmd\": \"created_room\", \"room_id\": \"%s\" }", room.id))
 }
 
 func joinRoomHandler(c *Client, m *JsonMessageCmdJoin) {
-
-	if err := c.JoinRoomById(m.RoomId); err != nil {
+	if err := c.JoinRoomById(m.RoomId, m.UserInfo); err != nil {
 		return
 	}
 
-	if err := c.conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("{ \"cmd\": \"joined_room\", \"room_id\": \"%s\" }", m.RoomId))); err != nil {
-		log.Println(err)
-		return
-	}
+	c.send <- []byte(fmt.Sprintf("{ \"cmd\": \"joined_room\", \"room_id\": \"%s\" }", m.RoomId))
 }

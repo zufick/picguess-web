@@ -1,4 +1,5 @@
 import type { VirtualCanvas } from '@/types/VirtualCanvas';
+import type { UserInfo } from '@/types/UserInfo';
 import { defineStore } from 'pinia'
 
 export const useWebsocketStore = () => { 
@@ -7,6 +8,7 @@ export const useWebsocketStore = () => {
       ws: undefined as WebSocket | undefined, 
       connectionError: false,
       joinedRoomId: "",
+      gameState: {},
       virtualCanvas: undefined as VirtualCanvas | undefined,
     }),
     getters: {
@@ -50,6 +52,10 @@ export const useWebsocketStore = () => {
               this.joinedRoomId = jsonData.room_id;
               break;
             }
+            case "state": {
+              this.gameState = jsonData;
+              break;
+            }
             case "draw_new": {
               this.virtualCanvas?.startNewLine(jsonData.id, jsonData.data)
               break;
@@ -72,11 +78,11 @@ export const useWebsocketStore = () => {
       setVirtualCanvas(canvas: VirtualCanvas) {
         this.virtualCanvas = canvas;
       },
-      joinRoom(roomId: String) {
-        this.ws?.send(JSON.stringify({cmd: "join", room_id: roomId}))
+      joinRoom(roomId: String, userInfo: UserInfo) {
+        this.ws?.send(JSON.stringify({cmd: "join", room_id: roomId, user_info: userInfo}))
       },
-      createRoom() {
-        this.ws?.send(JSON.stringify({cmd: "create"}))
+      createRoom(userInfo: UserInfo) {
+        this.ws?.send(JSON.stringify({cmd: "create", user_info: userInfo}))
       },
       sendDrawNewLine(data: { color: string, width: number }) {
         this.ws?.send(JSON.stringify({cmd: "draw_new", data}))
