@@ -168,8 +168,9 @@ onMounted(() => {
 
 
 <template>
-    <div>
-        <div>
+    <div class="flex gap-4">
+        <canvas class="border-2 rounded-lg border-white/20" ref="drawingCanvas" height="768" width="1024" @mousemove="mouseMove" @mousedown="mouseDown" @mouseup="mouseUp"></canvas>
+        <div class="flex flex-col items-center gap-4">
             <input v-model="drawColor" value="#ffffff" type="color">
             <input v-model="drawWidth" type="range" min="1" max="50" value="5">
             <button @click="undoClicked">
@@ -183,6 +184,12 @@ onMounted(() => {
                 </svg>
             </button>
         </div>
-        <canvas class="border-2 rounded-lg border-white/20" ref="drawingCanvas" height="768" width="1024" @mousemove="mouseMove" @mousedown="mouseDown" @mouseup="mouseUp"></canvas>
     </div>
 </template>
+
+<style scoped>
+    input[type="range"] {
+        appearance: slider-vertical;
+        width: 8px;
+    }
+</style>

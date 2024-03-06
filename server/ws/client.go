@@ -2,13 +2,15 @@ package ws
 
 import (
 	"errors"
+	"game-server/game"
 
 	"github.com/gorilla/websocket"
 )
 
 type Client struct {
-	id   int
-	room *Room
+	id     int
+	room   *Room
+	player *game.Player
 
 	// The websocket connection.
 	conn *websocket.Conn

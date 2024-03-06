@@ -1,14 +1,19 @@
 import type { VirtualCanvas } from '@/types/VirtualCanvas';
 import type { UserInfo } from '@/types/UserInfo';
 import { defineStore } from 'pinia'
+import { useGameStore } from './GameStore';
+
 
 export const useWebsocketStore = () => { 
+  const gameStore = useGameStore();
+
+
   const innerStore = defineStore('websocket', {
     state: () => ({ 
       ws: undefined as WebSocket | undefined, 
       connectionError: false,
       joinedRoomId: "",
-      gameState: {},
+      roomState: {},
       virtualCanvas: undefined as VirtualCanvas | undefined,
     }),
     getters: {
@@ -52,8 +57,12 @@ export const useWebsocketStore = () => {
               this.joinedRoomId = jsonData.room_id;
               break;
             }
-            case "state": {
-              this.gameState = jsonData;
+            case "roomstate": {
+              this.roomState = jsonData;
+              break;
+            }
+            case "gamestate": {
+              gameStore.gameState = jsonData.gamestate
               break;
             }
             case "draw_new": {
@@ -96,6 +105,9 @@ export const useWebsocketStore = () => {
       sendDrawRedo(){
         this.ws?.send(JSON.stringify({cmd: "draw_redo"}))
       },
+      startGame() {
+        this.ws?.send(JSON.stringify({cmd: "game_start"}))
+      }
     },
   });
 

@@ -3,6 +3,7 @@ package ws
 import (
 	"encoding/json"
 	"fmt"
+	"game-server/game"
 	"log"
 	"net/http"
 	"time"
@@ -122,6 +123,8 @@ func (c *Client) messageHandler(conn *websocket.Conn, rawMessage []byte) {
 		var data JsonMessageCmdJoin
 		json.Unmarshal(rawMessage, &data)
 		joinRoomHandler(c, &data)
+	case MessageCmdGame_Start:
+		gameStartHandler(c)
 	case MessageCmdDraw_new,
 		MessageCmdDraw_xy,
 		MessageCmdDraw_undo,
@@ -146,4 +149,44 @@ func joinRoomHandler(c *Client, m *JsonMessageCmdJoin) {
 	}
 
 	c.send <- []byte(fmt.Sprintf("{ \"cmd\": \"joined_room\", \"room_id\": \"%s\" }", m.RoomId))
+}
+
+func gameStartHandler(c *Client) {
+	if len(c.room.clients) < 2 {
+		return
+	}
+
+	room := c.room
+
+	room.game = game.NewGame()
+
+	for c := range room.clients {
+		c.player = room.game.NewPlayer()
+	}
+
+	go gameStateHandler(room)
+	room.game.Start()
+}
+
+func gameStateHandler(r *Room) {
+	for {
+		<-r.game.StateUpdated
+		for c := range r.clients {
+			gsd := GameStateData{
+				Cmd: "gamestate",
+				State: struct {
+					Player *game.Player "json:\"player\""
+				}{
+					Player: c.player,
+				},
+			}
+
+			data, err := json.Marshal(gsd)
+			if err != nil {
+				log.Println(err)
+				continue
+			}
+			c.send <- data
+		}
+	}
 }

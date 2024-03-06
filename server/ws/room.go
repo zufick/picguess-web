@@ -116,8 +116,7 @@ func (r *Room) broadcastGameState() {
 	}
 
 	roomState := &RoomStateBroadcastData{
-		Cmd:         "state",
-		Game:        r.game,
+		Cmd:         "roomstate",
 		ClientInfos: clientsInfo,
 	}
 

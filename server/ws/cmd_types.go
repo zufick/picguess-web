@@ -3,12 +3,13 @@ package ws
 import "game-server/game"
 
 const (
-	MessageCmdCreate    = "create"
-	MessageCmdJoin      = "join"
-	MessageCmdDraw_new  = "draw_new"
-	MessageCmdDraw_xy   = "draw_xy"
-	MessageCmdDraw_redo = "draw_redo"
-	MessageCmdDraw_undo = "draw_undo"
+	MessageCmdCreate     = "create"
+	MessageCmdJoin       = "join"
+	MessageCmdGame_Start = "game_start"
+	MessageCmdDraw_new   = "draw_new"
+	MessageCmdDraw_xy    = "draw_xy"
+	MessageCmdDraw_redo  = "draw_redo"
+	MessageCmdDraw_undo  = "draw_undo"
 )
 
 type UserInfo struct {
@@ -50,6 +51,12 @@ type JsonMessageCmdDraw_xy struct {
 
 type RoomStateBroadcastData struct {
 	Cmd         string     `json:"cmd"`
-	Game        *game.Game `json:"game"`
 	ClientInfos []UserInfo `json:"clients"`
+}
+
+type GameStateData struct {
+	Cmd   string `json:"cmd"`
+	State struct {
+		Player *game.Player `json:"player"`
+	} `json:"gamestate"`
 }

@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"game-server/ws"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -15,7 +15,7 @@ import (
 const PORT = ":8081"
 
 func main() {
-	fmt.Printf("Starting http server at %s\n", PORT)
+	log.Printf("Starting http server at %s\n", PORT)
 
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -43,6 +43,6 @@ func main() {
 	})
 
 	if err := g.Wait(); err != nil {
-		fmt.Printf("exit reason: %s \n", err)
+		log.Printf("exit reason: %s \n", err)
 	}
 }
