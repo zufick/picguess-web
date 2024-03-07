@@ -31,7 +31,7 @@ func NewClient(conn *websocket.Conn) *Client {
 }
 
 func (c *Client) JoinRoomById(roomId string, userInfo UserInfo) error {
-	if rooms[roomId] == nil {
+	if rooms[roomId] == nil || rooms[roomId].game != nil {
 		return errors.New("Room not found")
 	}
 	lastUserIdInRoom++
