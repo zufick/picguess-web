@@ -1,11 +1,14 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { useWebsocketStore } from '@/stores/WebsocketStore';
+import { useRoute } from 'vue-router';
 
 
 const wsStore = useWebsocketStore();
 const enteredName = ref("name");
 const enteredRoomId = ref("");
+const route = useRoute()
+
 
 function setRandomName() {
     let words = ['Personal', 'Flour', 'Discover', 'Marble', 'Doggy', 'Bubble', 'Style', 'Carpet', 'Movie' ]
@@ -28,6 +31,14 @@ function joinRoomClick() {
 function createRoomClick() {
     wsStore.createRoom({username: enteredName.value})
 }
+
+onMounted(() => {
+    console.log("on mounted")
+    if (route.params.room != undefined) {
+        enteredRoomId.value = route.params.room + ""
+        joinRoomClick();
+    }
+})
 
 </script>
 

@@ -189,7 +189,7 @@ onMounted(() => {
 
 <style scoped>
     input[type="range"] {
-        appearance: slider-vertical;
+        writing-mode: vertical-lr;
         width: 8px;
     }
 </style>

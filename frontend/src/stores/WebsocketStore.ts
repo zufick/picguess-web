@@ -2,11 +2,12 @@ import type { VirtualCanvas } from '@/types/VirtualCanvas';
 import type { UserInfo } from '@/types/UserInfo';
 import { defineStore } from 'pinia'
 import { useGameStore } from './GameStore';
+import { useRouter } from 'vue-router';
 
 
 export const useWebsocketStore = () => { 
   const gameStore = useGameStore();
-
+  const router = useRouter();
 
   const innerStore = defineStore('websocket', {
     state: () => ({ 
@@ -17,6 +18,9 @@ export const useWebsocketStore = () => {
       virtualCanvas: undefined as VirtualCanvas | undefined,
     }),
     getters: {
+      isConnected() : Boolean {
+        return this.ws != undefined
+      },
       isJoinedRoom(): Boolean {
         return !this.connectionError && this.joinedRoomId != "";
       }
@@ -26,7 +30,10 @@ export const useWebsocketStore = () => {
         console.log("Initializing ws connection...")
 
         let socket = new WebSocket("ws://" + location.hostname + ":8081");
-        this.ws = socket;
+
+        socket.addEventListener("open", (event) => {
+          this.ws = socket;
+        });
 
         socket.addEventListener("error", (event) => {
             this.connectionError = true
@@ -50,11 +57,11 @@ export const useWebsocketStore = () => {
 
           switch (jsonData.cmd) {
             case "created_room": {
-              this.joinedRoomId = jsonData.room_id;
+              this.setJoinedRoomId(jsonData.room_id)
               break;
             }
             case "joined_room": {
-              this.joinedRoomId = jsonData.room_id;
+              this.setJoinedRoomId(jsonData.room_id)
               break;
             }
             case "roomstate": {
@@ -107,6 +114,10 @@ export const useWebsocketStore = () => {
       },
       startGame() {
         this.ws?.send(JSON.stringify({cmd: "game_start"}))
+      },
+      setJoinedRoomId(id: string) {
+        this.joinedRoomId = id;
+        router.push(`/room/${id}`)
       }
     },
   });
