@@ -33,12 +33,13 @@ function createRoomClick() {
 }
 
 onMounted(() => {
-    console.log("on mounted")
     if (route.params.room != undefined) {
         enteredRoomId.value = route.params.room + ""
         joinRoomClick();
     }
 })
+
+
 
 </script>
 

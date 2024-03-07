@@ -11,8 +11,31 @@ import { onMounted } from 'vue';
 
 const wsStore = useWebsocketStore();
 const gameStore = useGameStore();
+const route = useRoute();
 
+function devAutoJoin() {
+    // @ts-ignore
+    const isDev = import.meta.env.DEV
 
+    setTimeout(() => {
+        if (isDev) {
+            if (route.params.room == undefined) {
+                wsStore.createRoom({username: Math.random()*1000 + ""})
+                setTimeout(() => {
+                    // @ts-ignore
+                    window.open(window.location.href, '_blank');
+                }, 200)
+
+            } else {
+                wsStore.startGame()
+            }
+        }
+    }, 300)
+}
+
+onMounted(() => {
+    devAutoJoin();
+})
 
 </script>
 

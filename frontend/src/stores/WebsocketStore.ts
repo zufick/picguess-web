@@ -3,6 +3,7 @@ import type { UserInfo } from '@/types/UserInfo';
 import { defineStore } from 'pinia'
 import { useGameStore } from './GameStore';
 import { useRouter } from 'vue-router';
+import type { RoomState } from '@/types/RoomState';
 
 
 export const useWebsocketStore = () => { 
@@ -14,7 +15,7 @@ export const useWebsocketStore = () => {
       ws: undefined as WebSocket | undefined, 
       connectionError: false,
       joinedRoomId: "",
-      roomState: {},
+      roomState: {} as RoomState,
       virtualCanvas: undefined as VirtualCanvas | undefined,
     }),
     getters: {

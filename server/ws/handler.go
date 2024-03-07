@@ -152,7 +152,7 @@ func joinRoomHandler(c *Client, m *JsonMessageCmdJoin) {
 }
 
 func gameStartHandler(c *Client) {
-	if len(c.room.clients) < 2 {
+	if c.room != nil && len(c.room.clients) < 2 {
 		return
 	}
 

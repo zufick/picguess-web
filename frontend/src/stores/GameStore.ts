@@ -1,9 +1,10 @@
+import type { GameState } from '@/types/GameState'
 import { defineStore } from 'pinia'
 
 
 export const useGameStore = defineStore('game', {
     state: () => ({ 
-        gameState: {}
+        gameState: {} as GameState
     }),
   })
   
