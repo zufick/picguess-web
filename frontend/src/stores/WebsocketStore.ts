@@ -119,6 +119,9 @@ export const useWebsocketStore = () => {
       setJoinedRoomId(id: string) {
         this.joinedRoomId = id;
         router.push(`/room/${id}`)
+      },
+      pickAnswer(answer: string) {
+        this.ws?.send(JSON.stringify({cmd: "game_answer", answer}))
       }
     },
   });

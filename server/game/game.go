@@ -3,20 +3,29 @@ package game
 import (
 	"game-server/utils/lang"
 	"log"
+
+	"golang.org/x/exp/slices"
 )
 
+type AnswerResults struct {
+	Answer    string `json:"answer"`
+	IsCorrect bool   `json:"isCorrect"`
+}
+
 type Player struct {
-	Score            int          `json:"score"`
-	WordPool         []string     `json:"wordPool"`
-	OpponentWinWords []string     `json:"opponentWinWords"`
-	AnswerResults    map[int]bool `json:"answerResults"`
-	Opponent         *Player      `json:"-"`
+	Score            int             `json:"score"`
+	WordPool         []string        `json:"wordPool"`
+	OpponentWinWords []string        `json:"opponentWinWords"`
+	AnswerResults    []AnswerResults `json:"answerResults"`
+	OpponentResults  []AnswerResults `json:"opponentResults"`
+	Opponent         *Player         `json:"-"`
 }
 
 type Game struct {
 	players        map[*Player]bool
 	wordsPerPlayer int
 	wordsToWin     int
+	winner         *Player
 	StateUpdated   chan int
 }
 
@@ -30,7 +39,8 @@ func NewGame() *Game {
 
 func (g *Game) NewPlayer() *Player {
 	p := &Player{
-		Score: 0,
+		Score:         0,
+		AnswerResults: make([]AnswerResults, 0),
 	}
 	g.players[p] = true
 	return p
@@ -60,4 +70,68 @@ func (g *Game) Start() {
 	}
 
 	g.StateUpdated <- 1
+}
+
+func (g *Game) AnswerWord(p *Player, answer string) {
+	if p == nil || len(p.AnswerResults) >= g.wordsToWin {
+		return
+	}
+
+	for _, a := range p.AnswerResults {
+		if a.Answer == answer {
+			return
+		}
+	}
+
+	isCorrect := slices.Contains(p.Opponent.OpponentWinWords, answer)
+
+	p.AnswerResults = append(p.AnswerResults, AnswerResults{Answer: answer, IsCorrect: isCorrect})
+	p.Opponent.OpponentResults = p.AnswerResults
+
+	if isCorrect {
+		p.Score += 1
+		p.Opponent.Score += 2
+	} else {
+		p.Score -= 2
+		p.Opponent.Score -= 1
+	}
+
+	if p.Score < 0 {
+		p.Score = 0
+	}
+
+	if p.Opponent.Score < 0 {
+		p.Opponent.Score = 0
+	}
+
+	g.CheckWin()
+
+	g.StateUpdated <- 1
+}
+
+func (g *Game) CheckWin() {
+	wordsRequired := len(g.players) * g.wordsToWin
+	answeredWords := 0
+
+	var playerWithMostScore *Player
+
+	for p := range g.players {
+		answeredWords += len(p.AnswerResults)
+
+		if playerWithMostScore == nil {
+			playerWithMostScore = p
+		}
+
+		if playerWithMostScore.Score < p.Score {
+			playerWithMostScore = p
+		}
+	}
+
+	if answeredWords >= wordsRequired {
+		g.winner = playerWithMostScore
+	}
+}
+
+func (g *Game) GetWinner() *Player {
+	return g.winner
 }

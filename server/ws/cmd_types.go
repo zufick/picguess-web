@@ -3,13 +3,15 @@ package ws
 import "game-server/game"
 
 const (
-	MessageCmdCreate     = "create"
-	MessageCmdJoin       = "join"
-	MessageCmdGame_Start = "game_start"
-	MessageCmdDraw_new   = "draw_new"
-	MessageCmdDraw_xy    = "draw_xy"
-	MessageCmdDraw_redo  = "draw_redo"
-	MessageCmdDraw_undo  = "draw_undo"
+	MessageCmdCreate      = "create"
+	MessageCmdJoin        = "join"
+	MessageCmdGame_start  = "game_start"
+	MessageCmdGame_answer = "game_answer"
+	MessageCmdDraw_new    = "draw_new"
+	MessageCmdDraw_xy     = "draw_xy"
+	MessageCmdDraw_redo   = "draw_redo"
+	MessageCmdDraw_undo   = "draw_undo"
+	MessageCmdGameState   = "gamestate"
 )
 
 type UserInfo struct {
@@ -49,14 +51,25 @@ type JsonMessageCmdDraw_xy struct {
 	} `json:"point"`
 }
 
+type JsonMessageCmdGame_answer struct {
+	Cmd    string `json:"cmd"`
+	Answer string `json:"answer"`
+}
+
 type RoomStateBroadcastData struct {
 	Cmd         string     `json:"cmd"`
 	ClientInfos []UserInfo `json:"clients"`
 }
 
-type GameStateData struct {
+type GameStateBroadcast struct {
 	Cmd   string `json:"cmd"`
 	State struct {
-		Player *game.Player `json:"player"`
+		Player *game.Player              `json:"player"`
+		Winner *GameStateBroadcastWinner `json:"winner"`
 	} `json:"gamestate"`
+}
+
+type GameStateBroadcastWinner struct {
+	UserInfo UserInfo `json:"user_info"`
+	Score    int      `json:"score"`
 }

@@ -123,8 +123,12 @@ func (c *Client) messageHandler(conn *websocket.Conn, rawMessage []byte) {
 		var data JsonMessageCmdJoin
 		json.Unmarshal(rawMessage, &data)
 		joinRoomHandler(c, &data)
-	case MessageCmdGame_Start:
+	case MessageCmdGame_start:
 		gameStartHandler(c)
+	case MessageCmdGame_answer:
+		var data JsonMessageCmdGame_answer
+		json.Unmarshal(rawMessage, &data)
+		gameAnswerHandler(c, &data)
 	case MessageCmdDraw_new,
 		MessageCmdDraw_xy,
 		MessageCmdDraw_undo,
@@ -152,7 +156,7 @@ func joinRoomHandler(c *Client, m *JsonMessageCmdJoin) {
 }
 
 func gameStartHandler(c *Client) {
-	if c.room != nil && len(c.room.clients) < 2 {
+	if c.room == nil || len(c.room.clients) < 2 {
 		return
 	}
 
@@ -168,20 +172,47 @@ func gameStartHandler(c *Client) {
 	room.game.Start()
 }
 
+func gameAnswerHandler(c *Client, m *JsonMessageCmdGame_answer) {
+	if c.room == nil || c.room.game == nil {
+		return
+	}
+
+	c.room.game.AnswerWord(c.player, m.Answer)
+}
+
 func gameStateHandler(r *Room) {
+
 	for {
 		<-r.game.StateUpdated
+
+		var winner *GameStateBroadcastWinner
+
+		if r.game.GetWinner() != nil {
+			for c := range r.clients {
+				if c.player == r.game.GetWinner() {
+					winner = &GameStateBroadcastWinner{
+						UserInfo: c.userInfo,
+						Score:    c.player.Score,
+					}
+					break
+				}
+			}
+		}
+
 		for c := range r.clients {
-			gsd := GameStateData{
-				Cmd: "gamestate",
+
+			gsb := &GameStateBroadcast{
+				Cmd: MessageCmdGameState,
 				State: struct {
-					Player *game.Player "json:\"player\""
+					Player *game.Player              "json:\"player\""
+					Winner *GameStateBroadcastWinner "json:\"winner\""
 				}{
 					Player: c.player,
+					Winner: winner,
 				},
 			}
 
-			data, err := json.Marshal(gsd)
+			data, err := json.Marshal(gsb)
 			if err != nil {
 				log.Println(err)
 				continue
