@@ -11,6 +11,7 @@ const (
 	MessageCmdDraw_xy     = "draw_xy"
 	MessageCmdDraw_redo   = "draw_redo"
 	MessageCmdDraw_undo   = "draw_undo"
+	MessageCmdDraw_clear  = "draw_clear"
 	MessageCmdGameState   = "gamestate"
 )
 

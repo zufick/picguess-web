@@ -27,6 +27,7 @@ type Game struct {
 	wordsToWin     int
 	winner         *Player
 	StateUpdated   chan int
+	lang           string
 }
 
 func NewGame() *Game {
@@ -34,6 +35,7 @@ func NewGame() *Game {
 		players:        make(map[*Player]bool),
 		wordsPerPlayer: 16,
 		wordsToWin:     5,
+		lang:           "ru",
 	}
 }
 
@@ -48,7 +50,7 @@ func (g *Game) NewPlayer() *Player {
 
 func (g *Game) Start() {
 	g.StateUpdated = make(chan int)
-	words, err := lang.GenerateWords("ru", g.wordsPerPlayer*len(g.players))
+	words, err := lang.GenerateWords(g.lang, g.wordsPerPlayer*len(g.players))
 
 	if err != nil {
 		log.Println(err)

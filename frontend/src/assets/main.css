@@ -2,6 +2,64 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  @font-face {
+    font-family: 'Geist';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('./fonts/Geist-Regular.otf') format('opentype');
+  }
+
+  @font-face {
+    font-family: 'Geist';
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url('./fonts/Geist-Medium.otf') format('opentype');
+  }
+
+  @font-face {
+    font-family: 'Geist';
+    font-style: normal;
+    font-weight: 300;
+    font-display: swap;
+    src: url('./fonts/Geist-Light.otf') format('opentype');
+  }
+
+  @font-face {
+    font-family: 'Geist';
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: url('./fonts/Geist-SemiBold.otf') format('opentype');
+  }
+
+  @font-face {
+    font-family: 'Geist';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('./fonts/Geist-Bold.otf') format('opentype');
+  }
+
+  @font-face {
+    font-family: 'Geist';
+    font-style: normal;
+    font-weight:  800;
+    font-display: swap;
+    src: url('./fonts/Geist-Black.otf') format('opentype');
+  }
+  
+  @font-face {
+    font-family: 'Geist';
+    font-style: normal;
+    font-weight:  900;
+    font-display: swap;
+    src: url('./fonts/Geist-UltraBlack.otf') format('opentype');
+  }
+}
+
 body {
   background-color: #201f1f;
   color: white;
@@ -24,4 +82,24 @@ button {
 
 input[type="text"] {
   @apply rounded-md border-2 border-stone-700 focus:border-stone-400 focus:outline-none px-4 py-2 bg-stone-500 text-white;
+}
+
+.danger-btn {
+  @apply border-rose-600 text-rose-600 bg-rose-950 hover:bg-rose-900;
+}
+
+@keyframes appear {
+  from {
+      transform: translateY(50px);
+      opacity: 0;
+  }
+
+  to {
+      transform: translateY(0px);
+      opacity: 1;
+  }
+}
+
+.appear-anim {
+  animation: .1s ease appear;
 }

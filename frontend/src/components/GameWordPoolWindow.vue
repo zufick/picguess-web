@@ -26,8 +26,9 @@ function isWordCorrectEquals(word: string, checkForValue: boolean) {
 <template>
     <div class="window">
         <div class="word-container">
+            <p class="text-white/50">Opponent's possible words</p>
             <button @click="wsStore.pickAnswer(opponentWord)" 
-                class="p-2 px-4 bg-stone-900 rounded-md border-2 border-stone-700 w-40 h-20 text-center flex items-center justify-center" 
+                class="p-2 px-4 bg-stone-900 rounded-md border-2 border-stone-700 w-full h-20 text-center flex items-center justify-center" 
                 v-for="(opponentWord) in gameStore.gameState.player.wordPool"
                 :class="{ 'correct': isWordCorrectEquals(opponentWord, true), 'wrong': isWordCorrectEquals(opponentWord, false) }">
                 <span>{{ opponentWord }}</span>
@@ -39,28 +40,30 @@ function isWordCorrectEquals(word: string, checkForValue: boolean) {
 
 <style scoped>
     .window {
+        animation: .1s ease appear;
         position: absolute;
         top: 0;
-        left: 0;
+        right: 0;
         z-index: 20;
-        width: 100%;
-        height: 100%;
+        width: 300px;
+        height: calc(100% - 60px);
         border: 2px solid rgb(68 64 60);
         border-radius: 10px;
         color: rgb(68 64 60);
-        background: rgb(28 25 23);
+        background: rgba(28, 25, 23, .95);
         box-shadow: 0px 20px 20px #0000003d;
     }
 
     .word-container {
         width: 100%;
         height: 100%;
-        display: grid;
-        grid-template-columns: 20% 20% 20% 20%;
-        grid-gap: 10px;
+        padding: 30px;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
         align-items: center;
-        justify-content: center;
         justify-items: center;
+        overflow-y: scroll;
     }
 
     .wrong {
@@ -73,6 +76,27 @@ function isWordCorrectEquals(word: string, checkForValue: boolean) {
         background: rgb(2 44 34);
         color: rgb(52 211 153);
         border: 1px solid rgb(52 211 153);
+    }
+
+    ::-webkit-scrollbar {
+    width: 20px;
+    }
+
+    /* Track */
+    ::-webkit-scrollbar-track {
+        background: #282523;
+        border-radius: .5rem;
+    }
+    
+    /* Handle */
+    ::-webkit-scrollbar-thumb {
+        background: #33302E;
+    border-radius: .5rem;
+    }
+
+    /* Handle on hover */
+    ::-webkit-scrollbar-thumb:hover {
+        background: #413F3D;
     }
 
 </style>

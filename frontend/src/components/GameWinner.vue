@@ -27,19 +27,6 @@ const wsStore = useWebsocketStore();
 </template>
 
 <style scoped>
-    @keyframes appear {
-        from {
-            transform: scale(1.1);
-            opacity: 0;
-        }
-
-        to {
-            transform: scale(1);
-            opacity: 1;
-        }
-    }
-
-
     .window {
         animation: 1s ease appear;
         position: absolute;

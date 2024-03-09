@@ -132,7 +132,8 @@ func (c *Client) messageHandler(conn *websocket.Conn, rawMessage []byte) {
 	case MessageCmdDraw_new,
 		MessageCmdDraw_xy,
 		MessageCmdDraw_undo,
-		MessageCmdDraw_redo:
+		MessageCmdDraw_redo,
+		MessageCmdDraw_clear:
 		c.room.broadcastFromClient <- BroadcastSenderInfo{Sender: c.id, Data: rawMessage}
 	}
 }
@@ -166,6 +167,7 @@ func gameStartHandler(c *Client) {
 
 	for c := range room.clients {
 		c.player = room.game.NewPlayer()
+		c.send <- []byte("{ \"cmd\": \"draw_clear\", \"id\": \"\" }")
 	}
 
 	go gameStateHandler(room)

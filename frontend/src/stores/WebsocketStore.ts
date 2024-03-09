@@ -89,6 +89,10 @@ export const useWebsocketStore = () => {
               this.virtualCanvas?.redoLine(jsonData.id);
               break;
             }
+            case "draw_clear": {
+              this.virtualCanvas?.drawClear(jsonData.id);
+              break;
+            }
           }      
         });
       },
@@ -112,6 +116,9 @@ export const useWebsocketStore = () => {
       },
       sendDrawRedo(){
         this.ws?.send(JSON.stringify({cmd: "draw_redo"}))
+      },
+      sendDrawClear() {
+        this.ws?.send(JSON.stringify({cmd: "draw_clear"}))
       },
       startGame() {
         this.ws?.send(JSON.stringify({cmd: "game_start"}))
