@@ -18,10 +18,14 @@ const virtualCanvas: VirtualCanvas = {
     lines: {},
     undoLines: {},
     drawCalls: 0,
+    sendPointsBuffer: [],
+    sendPointsBufferLimit: 5,
     setCanvas(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
     },
     startNewLine(id: string, data: VirtualCanvasLineData) {
+        this.sendPointsBuffer = []
+
         if (this.lines[id] == undefined) {
             this.lines[id] = []
         }
@@ -39,7 +43,13 @@ const virtualCanvas: VirtualCanvas = {
         this.startNewLine("local", data)
     },
     drawLocalPoint(point: VirtualCanvasDrawPoint) {
+        this.sendPointsBuffer.push(point.x, point.y)
         this.drawPoint("local", point)
+
+        if (this.sendPointsBuffer.length >= 2 * this.sendPointsBufferLimit) {
+            wsStore.sendDrawPoints(this.sendPointsBuffer)
+            this.sendPointsBuffer = []
+        }
     },
     drawPoint(id: string, point: VirtualCanvasDrawPoint) {
         let line = this.lines[id];
@@ -50,11 +60,27 @@ const virtualCanvas: VirtualCanvas = {
 
         this.redrawCanvas();
     },
+    drawPoints(id: string, points: number[]) {
+        let line = this.lines[id];
+        if(line[line.length - 1].points == undefined) {
+            line[line.length - 1].points = [];
+        }
+
+        for (let i = 0; i < points.length; i+=2) {
+            let point = {
+                x: points[i],
+                y: points[i+1]
+            }
+            line[line.length - 1].points.push(point);
+        }
+
+
+        this.redrawCanvas();
+    },
     redrawCanvas() {
         window.requestAnimationFrame(() => this.redrawCanvasLoop())
     },
     redrawCanvasLoop() {
-
         this.drawCalls = 0;
 
         let ctx = this.canvas?.getContext("2d");
@@ -163,17 +189,22 @@ function mouseDown(event: any) {
 function drawEventPoint(event: any) {
     let rect = drawingCanvas.value?.getBoundingClientRect();
     let point = { 
-        x: event.clientX - (rect?.left ?? 0),
-        y: event.clientY - (rect?.top ?? 0),
+        x: Math.floor(event.clientX - rect!.left ?? 0),
+        y: Math.floor(event.clientY - rect!.top ?? 0),
     }
 
     virtualCanvas.drawLocalPoint(point)
-    wsStore.sendDrawPoint(point)
+
 }
 
 function mouseUp(event: any) {
     isMouseDown = false;
-    let ctx = drawingCanvas.value?.getContext("2d");
+
+    if(virtualCanvas.sendPointsBuffer.length > 0) {
+        wsStore.sendDrawPoints(virtualCanvas.sendPointsBuffer)
+        virtualCanvas.sendPointsBuffer = []
+    }
+    
 }
 
 function undoClicked() {
@@ -252,6 +283,7 @@ onMounted(() => {
         width: 1024px;
         height: 768px;
         position: relative;
+        user-select: none; /* Standard syntax */
     }
 
     .canvas-bg {

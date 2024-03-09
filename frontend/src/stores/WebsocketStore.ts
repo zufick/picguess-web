@@ -3,6 +3,7 @@ import type { UserInfo } from '@/types/UserInfo';
 import { defineStore } from 'pinia'
 import { useGameStore } from './GameStore';
 import { useRouter } from 'vue-router';
+import type { VirtualCanvasDrawPoint } from '@/types/VirtualCanvas'
 import type { RoomState } from '@/types/RoomState';
 
 
@@ -54,6 +55,11 @@ export const useWebsocketStore = () => {
             return;
           }
 
+          if ("xy" in jsonData) {
+            this.virtualCanvas?.drawPoints(jsonData.id, jsonData.xy);
+            return;
+          }
+
           if (!("cmd" in jsonData)) return;
 
           switch (jsonData.cmd) {
@@ -93,7 +99,7 @@ export const useWebsocketStore = () => {
               this.virtualCanvas?.drawClear(jsonData.id);
               break;
             }
-          }      
+          }
         });
       },
       setVirtualCanvas(canvas: VirtualCanvas) {
@@ -108,8 +114,8 @@ export const useWebsocketStore = () => {
       sendDrawNewLine(data: { color: string, width: number }) {
         this.ws?.send(JSON.stringify({cmd: "draw_new", data}))
       },
-      sendDrawPoint(point: { x: number, y: number }) {
-        this.ws?.send(JSON.stringify({cmd: "draw_xy", point}))
+      sendDrawPoints(points: number[]) {
+        this.ws?.send(JSON.stringify({xy: points}))
       },
       sendDrawUndo(){
         this.ws?.send(JSON.stringify({cmd: "draw_undo"}))

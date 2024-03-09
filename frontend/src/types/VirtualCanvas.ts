@@ -1,15 +1,14 @@
 export type VirtualCanvas = {
     canvas?: HTMLCanvasElement,
     drawCalls: number,
+    sendPointsBuffer: number[],
+    sendPointsBufferLimit: number,
     lines: {
         [key: string] : { // Key is user index in current room
             color: string,
             width: number,
             layerIndex?: number,
-            points: { 
-                x: number, 
-                y: number 
-            }[]
+            points: VirtualCanvasDrawPoint[]
         }[]
     },
     undoLines: {
@@ -17,10 +16,7 @@ export type VirtualCanvas = {
             color: string,
             width: number,
             layerIndex?: number,
-            points: { 
-                x: number, 
-                y: number 
-            }[]
+            points: VirtualCanvasDrawPoint[]
         }[]
     },
     setCanvas: (canvas: HTMLCanvasElement) => void,
@@ -28,6 +24,7 @@ export type VirtualCanvas = {
     startNewLocalLine: (data: VirtualCanvasLineData) => void,
     drawLocalPoint: (point: VirtualCanvasDrawPoint) => void,
     drawPoint: (id: string, point: VirtualCanvasDrawPoint) => void,
+    drawPoints: (id: string, points: number[]) => void,
     redrawCanvas: () => void,
     redrawCanvasLoop: () => void,
     undoLine: (id: string) => void,

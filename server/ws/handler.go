@@ -50,6 +50,10 @@ func (c *Client) readPump() {
 	defer func() {
 		if c.room != nil {
 			c.room.unregister <- c
+
+			if len(c.room.clients) == 1 {
+				delete(rooms, c.room.id)
+			}
 		}
 		c.conn.Close()
 	}()
@@ -136,6 +140,12 @@ func (c *Client) messageHandler(conn *websocket.Conn, rawMessage []byte) {
 		MessageCmdDraw_clear:
 		c.room.broadcastFromClient <- BroadcastSenderInfo{Sender: c.id, Data: rawMessage}
 	}
+
+	_, MessageCmd_xy := message["xy"] // not using cmd field, only xy to shorten message length
+	if MessageCmd_xy {
+		c.room.broadcastFromClient <- BroadcastSenderInfo{Sender: c.id, Data: rawMessage}
+	}
+
 }
 
 func createRoomHandler(c *Client, m *JsonMessageCmdCreate) {
