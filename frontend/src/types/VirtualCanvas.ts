@@ -1,30 +1,21 @@
+import type { Ref } from "vue";
+
 export type VirtualCanvas = {
     canvas?: HTMLCanvasElement,
     drawCalls: number,
     sendPointsBuffer: number[],
     sendPointsBufferLimit: number,
-    lines: {
-        [key: string] : { // Key is user index in current room
-            color: string,
-            width: number,
-            layerIndex?: number,
-            points: VirtualCanvasDrawPoint[]
-        }[]
-    },
-    undoLines: {
-        [key: string] : { // Key is user index in current room
-            color: string,
-            width: number,
-            layerIndex?: number,
-            points: VirtualCanvasDrawPoint[]
-        }[]
+    lines: Ref<VirtualCanvasLine[]>,
+    lastUserLines: {
+        [key: string] : VirtualCanvasLine // userId -> line
     },
     setCanvas: (canvas: HTMLCanvasElement) => void,
-    startNewLine: (id: string, data: VirtualCanvasLineData) => void,
-    startNewLocalLine: (data: VirtualCanvasLineData) => void,
+    startNewLine: (id: string, data: VirtualCanvasLine) => void,
+    startNewLocalLine: (data: VirtualCanvasLine) => void,
     drawLocalPoint: (point: VirtualCanvasDrawPoint) => void,
     drawPoint: (id: string, point: VirtualCanvasDrawPoint) => void,
-    drawPoints: (id: string, points: number[]) => void,
+    drawPoints: (id: string, points: VirtualCanvasDrawPoint[]) => void,
+    drawPointArray: (id: string, points: number[]) => void,
     redrawCanvas: () => void,
     redrawCanvasLoop: () => void,
     undoLine: (id: string) => void,
@@ -32,6 +23,13 @@ export type VirtualCanvas = {
     drawClear: (id: string) => void
 };
 
-export type VirtualCanvasLineData = { color: string, width: number, points: [], layerIndex?: number };
 
 export type VirtualCanvasDrawPoint = { x: number, y: number };
+
+export type VirtualCanvasLine = {
+    userId?: string,
+    color: string,
+    width: number,
+    undo?: boolean,
+    newPoints?: VirtualCanvasDrawPoint[]
+};

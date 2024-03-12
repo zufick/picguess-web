@@ -34,8 +34,8 @@ func (c *Client) JoinRoomById(roomId string, userInfo UserInfo) error {
 	if rooms[roomId] == nil || rooms[roomId].game != nil {
 		return errors.New("Room not found")
 	}
-	lastUserIdInRoom++
-	c.id = lastUserIdInRoom
+	rooms[roomId].lastUserIdInRoom++
+	c.id = rooms[roomId].lastUserIdInRoom
 	c.userInfo = userInfo
 
 	c.room = rooms[roomId]
