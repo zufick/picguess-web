@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { defineProps, ref, watch, type Ref } from "vue";
+import { defineProps, ref, watch, type Ref, onMounted } from "vue";
 import type { 
     VirtualCanvas, 
     VirtualCanvasLine, 
@@ -36,9 +36,10 @@ const canvasLayer = {
 
         for (let i = 0; i < this.pendingDrawPoints.length; i++) {
             let point = this.pendingDrawPoints[i];
-            if (this.lastDrawPoint.x && this.lastDrawPoint.y) {
-                ctx?.moveTo(this.lastDrawPoint.x, this.lastDrawPoint.y);    
+            if (!this.lastDrawPoint.x && !this.lastDrawPoint.y) {
+                this.lastDrawPoint = point;
             }
+            ctx?.moveTo(this.lastDrawPoint.x, this.lastDrawPoint.y);    
             ctx?.lineTo(point.x, point.y);
             this.lastDrawPoint = point;
         }
@@ -90,18 +91,31 @@ const canvasLayer = {
         let ctx = drawingCanvas.value?.getContext("2d");
         ctx?.clearRect(0,0, drawingCanvas.value!.width, drawingCanvas.value!.height);
         this.lastDrawPoint = {} as VirtualCanvasDrawPoint;
+    },
+    setNewLine(newLine) {
+        if(newLine != this.line) {
+            canvasLayer.clearCanvas();
+        }
+
+        canvasLayer.line = newLine;
+        console.log("b")
+
+        if(newLine.newPoints) {
+            canvasLayer.pendingDrawPoints.push(...newLine.newPoints);
+            canvasLayer.drawPendingPoints();
+        }
     }
 }
 
-
 watch(() => props.line, async (newLine: VirtualCanvasLine, oldLine: VirtualCanvasLine) => {
-    if(newLine != oldLine)
-        canvasLayer.clearCanvas();
-
-    canvasLayer.line = newLine;
-    canvasLayer.pendingDrawPoints.push(...newLine.newPoints!);
-    canvasLayer.drawPendingPoints();
+    canvasLayer.setNewLine(newLine);
 },   {deep: true})
+
+onMounted(() => {
+    if (props.line.userId == "local" && Object.keys(canvasLayer.line).length == 0) {
+        canvasLayer.setNewLine(props.line)
+    }
+})
 </script>
 
 
