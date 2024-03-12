@@ -40,11 +40,19 @@ const canvasLayer = {
         this.pendingDrawPoints = [];
 
         ctx?.stroke();
+    },
+    clearCanvas() {
+        let ctx = drawingCanvas.value?.getContext("2d");
+        ctx?.clearRect(0,0, drawingCanvas.value!.width, drawingCanvas.value!.height);
+        this.lastDrawPoint = {} as VirtualCanvasDrawPoint;
     }
 }
 
 
 watch(() => props.line, async (newLine: VirtualCanvasLine, oldLine: VirtualCanvasLine) => {
+    if(newLine != oldLine)
+        canvasLayer.clearCanvas();
+
     canvasLayer.line = newLine;
     canvasLayer.pendingDrawPoints.push(...newLine.newPoints!);
     canvasLayer.drawPendingPoints();
