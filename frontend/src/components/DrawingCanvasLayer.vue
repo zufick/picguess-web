@@ -19,7 +19,7 @@ const canvasLayer = {
     pendingDrawPoints: [] as VirtualCanvasDrawPoint[],
     lastDrawPoint: {} as VirtualCanvasDrawPoint,
     drawingInterval: 0,
-    isNotBeingDrawn: false,
+    isBeingDrawn: true,
     drawPendingPoints() {
         if(this.line.userId != "local") {
             this.drawWithInterval();
@@ -84,7 +84,7 @@ const canvasLayer = {
                     // Draw also closest points without a delay
                     if (this.pendingDrawPoints.length <= 0) return;
 
-                    while(this.pendingDrawPoints.length > 0 && ((Math.hypot(this.pendingDrawPoints[0].x-point.x, this.pendingDrawPoints[0].y-point.y) <= 10) || this.isNotBeingDrawn)) {
+                    while(this.pendingDrawPoints.length > 0 && ((Math.hypot(this.pendingDrawPoints[0].x-point.x, this.pendingDrawPoints[0].y-point.y) <= 10) || !this.isBeingDrawn)) {
                         let anotherPoint = this.pendingDrawPoints.shift()!;
 
                         ctx?.lineTo(anotherPoint.x, anotherPoint.y);
@@ -129,7 +129,7 @@ watch(() => props.line, async (newLine: VirtualCanvasLine, oldLine: VirtualCanva
 
 watch(() => props.lastUserLine, async (newLastUserLine: VirtualCanvasLine, oldLastUserLine: VirtualCanvasLine) => {
     if (canvasLayer.line != newLastUserLine) {
-        canvasLayer.isNotBeingDrawn = true;
+        canvasLayer.isBeingDrawn = false;
     }
 })
 
@@ -152,7 +152,7 @@ onMounted(() => {
         top: 0;
         left: 0;
         pointer-events: none;
-        z-index: 100;
+        z-index: 1;
         color: black;
     }
 </style>
