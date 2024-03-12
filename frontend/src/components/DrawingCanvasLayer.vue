@@ -7,7 +7,8 @@ import type {
 } from '@/types/VirtualCanvas'
 
 const props = defineProps<{
-    line: VirtualCanvasLine
+    line: VirtualCanvasLine,
+    lastUserLine: VirtualCanvasLine,
 }>()
 const drawingCanvas = ref<InstanceType<typeof HTMLCanvasElement>>();
 
@@ -18,6 +19,7 @@ const canvasLayer = {
     pendingDrawPoints: [] as VirtualCanvasDrawPoint[],
     lastDrawPoint: {} as VirtualCanvasDrawPoint,
     drawingInterval: 0,
+    isNotBeingDrawn: false,
     drawPendingPoints() {
         if(this.line.userId != "local") {
             this.drawWithInterval();
@@ -79,14 +81,10 @@ const canvasLayer = {
                     ctx?.stroke();
                     this.lastDrawPoint = point;
 
-
-
                     // Draw also closest points without a delay
                     if (this.pendingDrawPoints.length <= 0) return;
 
-                    console.log(Math.hypot(this.pendingDrawPoints[0].x-point.x, this.pendingDrawPoints[0].y-point.y))
-
-                    while(this.pendingDrawPoints.length > 0 && Math.hypot(this.pendingDrawPoints[0].x-point.x, this.pendingDrawPoints[0].y-point.y) <= 20) {
+                    while(this.pendingDrawPoints.length > 0 && ((Math.hypot(this.pendingDrawPoints[0].x-point.x, this.pendingDrawPoints[0].y-point.y) <= 10) || this.isNotBeingDrawn)) {
                         let anotherPoint = this.pendingDrawPoints.shift()!;
 
                         ctx?.lineTo(anotherPoint.x, anotherPoint.y);
@@ -101,6 +99,10 @@ const canvasLayer = {
         }
     },
     clearCanvas() {
+        clearInterval(this.drawingInterval);
+        this.drawingInterval = 0;
+        this.pendingDrawPoints = [];
+
         let ctx = drawingCanvas.value?.getContext("2d");
         ctx?.clearRect(0,0, drawingCanvas.value!.width, drawingCanvas.value!.height);
         this.lastDrawPoint = {} as VirtualCanvasDrawPoint;
@@ -108,6 +110,7 @@ const canvasLayer = {
     setNewLine(newLine: VirtualCanvasLine) {
         if(newLine != this.line) {
             canvasLayer.clearCanvas();
+            console.log("not this new line")
         }
 
         canvasLayer.line = newLine;
@@ -123,6 +126,12 @@ const canvasLayer = {
 watch(() => props.line, async (newLine: VirtualCanvasLine, oldLine: VirtualCanvasLine) => {
     canvasLayer.setNewLine(newLine);
 },   {deep: true})
+
+watch(() => props.lastUserLine, async (newLastUserLine: VirtualCanvasLine, oldLastUserLine: VirtualCanvasLine) => {
+    if (canvasLayer.line != newLastUserLine) {
+        canvasLayer.isNotBeingDrawn = true;
+    }
+})
 
 onMounted(() => {
     if (props.line.userId == "local" && Object.keys(canvasLayer.line).length == 0) {

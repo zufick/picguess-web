@@ -205,7 +205,7 @@ onMounted(() => {
             <div class="canvas-bg"></div>
             <canvas ref="drawingCanvas" height="768" width="1024" @mousemove="mouseMove" @mousedown="mouseDown" @mouseup="mouseUp" @mouseout="mouseUp">
             </canvas>
-            <DrawingCanvasLayer v-for="line in virtualCanvas.lines.value" :line="line"/>
+            <DrawingCanvasLayer v-for="line in virtualCanvas.lines.value" :line="line" :lastUserLine="virtualCanvas.lastUserLines[line.userId!]"/>
         </div>
         <div class="flex flex-col items-center gap-4">
             <input v-model="drawColor" value="#ffffff" type="color">
