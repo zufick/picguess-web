@@ -58,16 +58,12 @@ const canvasLayer = {
         ctx?.beginPath();
 
         if (this.drawingInterval) {
-            console.log("drawingInterval exists")
             return;
         }
         if(!this.drawingInterval && this.pendingDrawPoints.length > 0) {
-            console.log("drawingInterval setup")
             this.drawingInterval = setInterval(() => {
-                console.log("drawingInterval")
 
                 if (this.pendingDrawPoints.length <= 0) {
-                    console.log("drawingInterval clear")
                     clearInterval(this.drawingInterval);
                     this.drawingInterval = 0;
                     return;
@@ -82,9 +78,26 @@ const canvasLayer = {
                     ctx?.lineTo(point.x, point.y);
                     ctx?.stroke();
                     this.lastDrawPoint = point;
+
+
+
+                    // Draw also closest points without a delay
+                    if (this.pendingDrawPoints.length <= 0) return;
+
+                    console.log(Math.hypot(this.pendingDrawPoints[0].x-point.x, this.pendingDrawPoints[0].y-point.y))
+
+                    while(this.pendingDrawPoints.length > 0 && Math.hypot(this.pendingDrawPoints[0].x-point.x, this.pendingDrawPoints[0].y-point.y) <= 20) {
+                        let anotherPoint = this.pendingDrawPoints.shift()!;
+
+                        ctx?.lineTo(anotherPoint.x, anotherPoint.y);
+                        ctx?.stroke();
+                        this.lastDrawPoint = anotherPoint;
+
+                        console.log("too close")
+                    }
                 }
 
-            }, 1)
+            }, 0.1)
         }
     },
     clearCanvas() {
@@ -92,13 +105,13 @@ const canvasLayer = {
         ctx?.clearRect(0,0, drawingCanvas.value!.width, drawingCanvas.value!.height);
         this.lastDrawPoint = {} as VirtualCanvasDrawPoint;
     },
-    setNewLine(newLine) {
+    setNewLine(newLine: VirtualCanvasLine) {
         if(newLine != this.line) {
             canvasLayer.clearCanvas();
         }
 
         canvasLayer.line = newLine;
-        console.log("b")
+        console.log("new line")
 
         if(newLine.newPoints) {
             canvasLayer.pendingDrawPoints.push(...newLine.newPoints);
