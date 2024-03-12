@@ -17,15 +17,22 @@ const canvasLayer = {
     line: {} as VirtualCanvasLine,
     pendingDrawPoints: [] as VirtualCanvasDrawPoint[],
     lastDrawPoint: {} as VirtualCanvasDrawPoint,
+    drawingInterval: 0,
     drawPendingPoints() {
+        if(this.line.userId != "local") {
+            this.drawWithInterval();
+            return;
+        }
+
         let ctx = drawingCanvas.value?.getContext("2d");
 
-        ctx!.lineWidth = this.line.width;
-        ctx!.lineCap = "round";
-        ctx!.strokeStyle = this.line.color;
+        if (ctx) {
+            ctx.lineWidth = this.line.width;
+            ctx.lineCap = "round";
+            ctx.strokeStyle = this.line.color;
+        }
 
         ctx?.beginPath();
-
 
         for (let i = 0; i < this.pendingDrawPoints.length; i++) {
             let point = this.pendingDrawPoints[i];
@@ -34,12 +41,50 @@ const canvasLayer = {
             }
             ctx?.lineTo(point.x, point.y);
             this.lastDrawPoint = point;
+        }
+        this.pendingDrawPoints = [];
+        ctx?.stroke();
+    },
+    drawWithInterval() {
+        let ctx = drawingCanvas.value?.getContext("2d");
 
+        if (ctx) {
+            ctx.lineWidth = this.line.width;
+            ctx.lineCap = "round";
+            ctx.strokeStyle = this.line.color;
         }
 
-        this.pendingDrawPoints = [];
+        ctx?.beginPath();
 
-        ctx?.stroke();
+        if (this.drawingInterval) {
+            console.log("drawingInterval exists")
+            return;
+        }
+        if(!this.drawingInterval && this.pendingDrawPoints.length > 0) {
+            console.log("drawingInterval setup")
+            this.drawingInterval = setInterval(() => {
+                console.log("drawingInterval")
+
+                if (this.pendingDrawPoints.length <= 0) {
+                    console.log("drawingInterval clear")
+                    clearInterval(this.drawingInterval);
+                    this.drawingInterval = 0;
+                    return;
+                }
+
+                let point = this.pendingDrawPoints.shift();
+
+                if (this.lastDrawPoint.x && this.lastDrawPoint.y) {
+                    ctx?.moveTo(this.lastDrawPoint.x, this.lastDrawPoint.y);    
+                }
+                if(point) {
+                    ctx?.lineTo(point.x, point.y);
+                    ctx?.stroke();
+                    this.lastDrawPoint = point;
+                }
+
+            }, 1)
+        }
     },
     clearCanvas() {
         let ctx = drawingCanvas.value?.getContext("2d");

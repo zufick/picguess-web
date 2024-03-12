@@ -37,7 +37,6 @@ const virtualCanvas: VirtualCanvas = {
 
         this.lastUserLines[id] = data
 
-        console.log(this.lines.value)
     },
     startNewLocalLine(data: VirtualCanvasLine) {
         this.startNewLine("local", data)
