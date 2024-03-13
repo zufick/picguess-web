@@ -91,8 +91,6 @@ const canvasLayer = {
                         ctx?.lineTo(anotherPoint.x, anotherPoint.y);
                         ctx?.stroke();
                         this.lastDrawPoint = anotherPoint;
-
-                        console.log("too close")
                     }
                 }
 
@@ -111,11 +109,9 @@ const canvasLayer = {
     setNewLine(newLine: VirtualCanvasLine) {
         if(newLine != this.line) {
             canvasLayer.clearCanvas();
-            console.log("not this new line")
         }
 
         canvasLayer.line = newLine;
-        console.log("new line")
 
         if(newLine.newPoints) {
             canvasLayer.pendingDrawPoints.push(...newLine.newPoints);

@@ -92,7 +92,15 @@ const virtualCanvas: VirtualCanvas = {
         this.lines.value[this.lines.value.indexOf(this.lastUserLines[id])].undo = false;
     },
     drawClear(id: string) {
-        alert("unimplemented")
+        if (id != "") {
+            wsStore.roomState.clients.forEach((u) => {
+                if (u.id == id) {
+                    alert(`User ${u.username} cleared canvas`)
+                }
+            });
+        }
+
+        this.lines.value = []
     }
 }
 
