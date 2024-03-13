@@ -6,6 +6,7 @@ export type VirtualCanvas = {
     sendPointsBuffer: number[],
     sendPointsBufferLimit: number,
     lines: Ref<VirtualCanvasLine[]>,
+    brush: Ref<VirtualCanvasBrush>,
     lastUserLines: {
         [key: string] : VirtualCanvasLine // userId -> line
     },
@@ -16,8 +17,6 @@ export type VirtualCanvas = {
     drawPoint: (id: string, point: VirtualCanvasDrawPoint) => void,
     drawPoints: (id: string, points: VirtualCanvasDrawPoint[]) => void,
     drawPointArray: (id: string, points: number[]) => void,
-    redrawCanvas: () => void,
-    redrawCanvasLoop: () => void,
     undoLine: (id: string) => void,
     redoLine: (id: string) => void,
     drawClear: (id: string) => void
@@ -33,3 +32,10 @@ export type VirtualCanvasLine = {
     undo?: boolean,
     newPoints?: VirtualCanvasDrawPoint[]
 };
+
+export type VirtualCanvasBrush = {
+    color: string,
+    width: number,
+    point: VirtualCanvasDrawPoint,
+    visible: boolean
+}

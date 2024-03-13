@@ -87,6 +87,7 @@ const canvasLayer = {
                     while(this.pendingDrawPoints.length > 0 && ((Math.hypot(this.pendingDrawPoints[0].x-point.x, this.pendingDrawPoints[0].y-point.y) <= 10) || !this.isBeingDrawn)) {
                         let anotherPoint = this.pendingDrawPoints.shift()!;
 
+                        ctx?.moveTo(this.lastDrawPoint.x, this.lastDrawPoint.y);
                         ctx?.lineTo(anotherPoint.x, anotherPoint.y);
                         ctx?.stroke();
                         this.lastDrawPoint = anotherPoint;

@@ -1,21 +1,30 @@
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { onMounted, provide, ref } from "vue";
 import { useWebsocketStore } from "@/stores/WebsocketStore";
 import type { 
     VirtualCanvas, 
     VirtualCanvasLine, 
-    VirtualCanvasDrawPoint 
+    VirtualCanvasDrawPoint, 
+    VirtualCanvasBrush
 } from '@/types/VirtualCanvas'
 import DrawingCanvasLayer from "./DrawingCanvasLayer.vue";
+import DrawingBrushPreview from "./DrawingBrushPreview.vue";
 
 const wsStore = useWebsocketStore();
 const drawingCanvas = ref<InstanceType<typeof HTMLCanvasElement>>();
-const drawColor = ref("#000000")
-const drawWidth = ref(5)
 const drawClearDialog = ref(false)
 
 const virtualCanvas: VirtualCanvas = {
     canvas: undefined,
+    brush: ref(<VirtualCanvasBrush>{
+        color: "#000000",
+        width: 5,
+        point: {
+            x: 0,
+            y: 0,
+        },
+        visible: false,
+    }),
     lines: ref([]),
     lastUserLines: {},
     drawCalls: 0,
@@ -68,42 +77,6 @@ const virtualCanvas: VirtualCanvas = {
         let line = this.lastUserLines[id];
         this.lines.value[this.lines.value.indexOf(line)].newPoints = points;
     },
-    redrawCanvas() {
-        window.requestAnimationFrame(() => this.redrawCanvasLoop())
-    },
-    redrawCanvasLoop() {
-
-        this.drawCalls = 0;
-
-        let ctx = this.canvas?.getContext("2d");
-        ctx!.clearRect(0, 0, this.canvas!.width, this.canvas!.height);
-
-
-        let lines = Object.values(this.lines).flat(1)
-        lines.sort((a,b) => a.layerIndex! - b.layerIndex!)
-
-        for (let i = 0; i < lines.length; i++) {
-            let line = lines[i]
-
-            ctx!.lineWidth = line.width;
-            ctx!.lineCap = "round";
-            ctx!.strokeStyle = line.color;
-            
-            if (line.points != undefined) {
-                line.points.forEach(point => {
-                    //if (lastPoint.x != 0) {
-                    //    ctx?.moveTo(lastPoint.x, lastPoint.y);    
-                    //}
-                    ctx?.lineTo(point.x, point.y);
-                    this.drawCalls++;
-                    //lastPoint = point;
-                });
-
-            }
-            ctx?.stroke();
-            ctx?.beginPath();
-        }
-    },
     undoLine(id: string) {
         if(this.lastUserLines[id] == undefined) {
             return;
@@ -133,39 +106,42 @@ type DrawData = {
 let isMouseDown = false;
 
 function mouseMove(event: MouseEvent) {
+    let rect = drawingCanvas.value?.getBoundingClientRect();
+    virtualCanvas.brush.value.point = {
+        x: Math.floor(event.clientX - rect!.left ?? 0),
+        y: Math.floor(event.clientY - rect!.top ?? 0),
+    };
+
     if(!isMouseDown) { return; }
 
     drawEventPoint(event);
 }
 
-function mouseDown(event: any) {
+function mouseDown(event: MouseEvent) {
     isMouseDown = true;
     
     virtualCanvas.startNewLocalLine({
-        color: drawColor.value,
-        width: drawWidth.value,
+        color: virtualCanvas.brush.value.color,
+        width: virtualCanvas.brush.value.width,
     })
 
     wsStore.sendDrawNewLine({ 
-        color: drawColor.value, 
-        width: drawWidth.value 
+        color: virtualCanvas.brush.value.color, 
+        width: virtualCanvas.brush.value.width 
     });
 
     drawEventPoint(event);
 }
 
-function drawEventPoint(event: any) {
+function drawEventPoint(event: MouseEvent) {
     let rect = drawingCanvas.value?.getBoundingClientRect();
-    let point = { 
-        x: Math.floor(event.clientX - rect!.left ?? 0),
-        y: Math.floor(event.clientY - rect!.top ?? 0),
-    }
+    let point = virtualCanvas.brush.value.point;
 
     virtualCanvas.drawLocalPoint(point)
 
 }
 
-function mouseUp(event: any) {
+function mouseUp(event: MouseEvent) {
     isMouseDown = false;
 
     if(virtualCanvas.sendPointsBuffer.length > 0) {
@@ -173,6 +149,14 @@ function mouseUp(event: any) {
         virtualCanvas.sendPointsBuffer = []
     }
     
+}
+
+function mouseEnter(event: MouseEvent) {
+    virtualCanvas.brush.value.visible = true;
+}
+
+function mouseLeave(event: MouseEvent) {
+    virtualCanvas.brush.value.visible = false;
 }
 
 function undoClicked() {
@@ -191,11 +175,15 @@ function drawClearClicked() {
     drawClearDialog.value = false
 }
 
-wsStore.setVirtualCanvas(virtualCanvas)
+function eraserClicked() {
+    virtualCanvas.brush.value.color = "#ffffff"
+}
 
+wsStore.setVirtualCanvas(virtualCanvas)
 onMounted(() => {
     virtualCanvas.setCanvas(drawingCanvas.value!)
 })
+
 </script>
 
 
@@ -203,13 +191,21 @@ onMounted(() => {
     <div class="flex gap-4">
         <div class="canvas-container border-2 rounded-lg border-white/20 overflow-hidden">
             <div class="canvas-bg"></div>
-            <canvas ref="drawingCanvas" height="768" width="1024" @mousemove="mouseMove" @mousedown="mouseDown" @mouseup="mouseUp" @mouseout="mouseUp">
+            <canvas ref="drawingCanvas" height="768" width="1024" 
+                @mousemove="mouseMove" 
+                @mousedown="mouseDown" 
+                @mouseup="mouseUp" 
+                @mouseout="mouseUp"
+                @mouseenter="mouseEnter"
+                @mouseleave="mouseLeave">
             </canvas>
             <DrawingCanvasLayer v-for="line in virtualCanvas.lines.value" :line="line" :lastUserLine="virtualCanvas.lastUserLines[line.userId!]"/>
+
+            <DrawingBrushPreview :brush="virtualCanvas.brush.value"/>
         </div>
         <div class="flex flex-col items-center gap-4">
-            <input v-model="drawColor" value="#ffffff" type="color">
-            <input v-model="drawWidth" type="range" min="1" max="50" value="5">
+            <input v-model="virtualCanvas.brush.value.color" value="#ffffff" type="color">
+            <input v-model="virtualCanvas.brush.value.width" type="range" min="1" max="50" value="5">
             <button @click="undoClicked">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 15.75 3 12m0 0 3.75-3.75M3 12h18" />
@@ -237,7 +233,9 @@ onMounted(() => {
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
                     </svg>
                 </button>
+
             </div>
+            <button @click="eraserClicked()">E</button>
         </div>
     </div>
 </template>
