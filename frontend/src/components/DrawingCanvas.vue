@@ -246,29 +246,6 @@ onMounted(() => {
 
 
 provide('virtualCanvas', virtualCanvas)
-
-function shuffle(array: any) {
-  let currentIndex = array.length,  randomIndex;
-
-  // While there remain elements to shuffle.
-  while (currentIndex > 0) {
-
-    // Pick a remaining element.
-    randomIndex = Math.floor(Math.random() * currentIndex);
-    currentIndex--;
-
-    // And swap it with the current element.
-    [array[currentIndex], array[randomIndex]] = [
-      array[randomIndex], array[currentIndex]];
-  }
-
-  return array;
-}
-
-function shuffleff() {
-    virtualCanvas.lines.value = shuffle(virtualCanvas.lines.value);
-}
-
 </script>
 
 
@@ -321,7 +298,6 @@ function shuffleff() {
 
             </div>
             <button @click="eraserClicked()">E</button>
-            <button @click="shuffleff"></button>
         </div>
     </div>
 </template>
