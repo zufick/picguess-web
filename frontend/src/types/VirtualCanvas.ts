@@ -2,10 +2,10 @@ import type { Ref } from "vue";
 
 export type VirtualCanvas = {
     canvas?: HTMLCanvasElement,
-    drawCalls: number,
     sendPointsBuffer: number[],
     sendPointsBufferLimit: number,
     lines: Ref<VirtualCanvasLine[]>,
+    linesToDelete: VirtualCanvasLine[],
     brush: Ref<VirtualCanvasBrush>,
     lastUserLines: {
         [key: string] : VirtualCanvasLine // userId -> line
@@ -19,7 +19,10 @@ export type VirtualCanvas = {
     drawPointArray: (id: string, points: number[]) => void,
     undoLine: (id: string) => void,
     redoLine: (id: string) => void,
-    drawClear: (id: string) => void
+    drawClear: (id: string) => void,
+    addReadyToMergeCanvas: (line: VirtualCanvasLine, canvas: HTMLCanvasElement) => void,
+    mergeReadyCanvases: () => void,
+    deleteReadyToDeleteLines: (mergedOnto: VirtualCanvasLine) => void,
 };
 
 
@@ -30,7 +33,9 @@ export type VirtualCanvasLine = {
     color: string,
     width: number,
     undo?: boolean,
-    newPoints?: VirtualCanvasDrawPoint[]
+    newPoints?: VirtualCanvasDrawPoint[],
+    readyToMergeCanvas?: HTMLCanvasElement,
+    mergeCanvases?: HTMLCanvasElement[],
 };
 
 export type VirtualCanvasBrush = {

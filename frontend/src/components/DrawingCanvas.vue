@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, provide, ref } from "vue";
+import { nextTick, onMounted, provide, ref } from "vue";
 import { useWebsocketStore } from "@/stores/WebsocketStore";
 import type { 
     VirtualCanvas, 
@@ -26,8 +26,8 @@ const virtualCanvas: VirtualCanvas = {
         visible: false,
     }),
     lines: ref([]),
+    linesToDelete: [],
     lastUserLines: {},
-    drawCalls: 0,
     sendPointsBuffer: [],
     sendPointsBufferLimit: 5,
     setCanvas(canvas: HTMLCanvasElement) {
@@ -45,19 +45,25 @@ const virtualCanvas: VirtualCanvas = {
         }
 
         this.lastUserLines[id] = data
-
     },
     startNewLocalLine(data: VirtualCanvasLine) {
         this.startNewLine("local", data)
     },
     drawLocalPoint(point: VirtualCanvasDrawPoint) {
         this.sendPointsBuffer.push(point.x, point.y)
-        this.drawPoint("local", point)
+
+        try {
+            this.drawPoint("local", point)
+
+
+        } catch (e) {
+            console.error(e)
+        }
 
         if (this.sendPointsBuffer.length >= 2 * this.sendPointsBufferLimit) {
-            wsStore.sendDrawPoints(this.sendPointsBuffer)
-            this.sendPointsBuffer = []
-        }
+                wsStore.sendDrawPoints(this.sendPointsBuffer)
+                this.sendPointsBuffer = []
+            }
     },
     drawPoint(id: string, point: VirtualCanvasDrawPoint) {
         this.drawPoints(id, [point])
@@ -75,6 +81,10 @@ const virtualCanvas: VirtualCanvas = {
     },
     drawPoints(id: string, points: VirtualCanvasDrawPoint[]) {
         let line = this.lastUserLines[id];
+        if(this.lines.value.indexOf(line) == -1) {
+            console.error("line -1", this.lines.value, line)
+            return;
+        }
         this.lines.value[this.lines.value.indexOf(line)].newPoints = points;
     },
     undoLine(id: string) {
@@ -101,6 +111,44 @@ const virtualCanvas: VirtualCanvas = {
         }
 
         this.lines.value = []
+    },
+    addReadyToMergeCanvas(line: VirtualCanvasLine, canvas: HTMLCanvasElement) {
+        if(line.readyToMergeCanvas) { return; }
+        this.lines.value[this.lines.value.indexOf(line)].readyToMergeCanvas = canvas;
+        this.mergeReadyCanvases();
+    },
+    mergeReadyCanvases() {
+        for(let i = this.lines.value.length - 1; i >= 0; i--) {
+            let line = this.lines.value[i];
+            if(!line || !line.readyToMergeCanvas)
+                continue;
+            
+            let mergeBottomLayers = [] as HTMLCanvasElement[];
+            let j = 0;
+            while (this.lines.value[i-j] && this.lines.value[i-j].readyToMergeCanvas) {
+                mergeBottomLayers.unshift(this.lines.value[i-j].readyToMergeCanvas!)
+                this.linesToDelete.push(this.lines.value[i-j])
+                j++;
+            }
+            this.lines.value[i-j+1].mergeCanvases = mergeBottomLayers;
+            this.linesToDelete.splice(this.linesToDelete.indexOf(this.lines.value[i-j+1]), 1)
+            i = i-j;
+        }
+    },
+    deleteReadyToDeleteLines(mergedOnto: VirtualCanvasLine) {
+        let deletedLines = []
+        for (let i = 0; i < this.linesToDelete.length; i++) {
+            deletedLines.push(i);
+            let lineToDelete = this.linesToDelete[i];
+            if (mergedOnto.mergeCanvases && lineToDelete.readyToMergeCanvas && mergedOnto.mergeCanvases?.includes(lineToDelete.readyToMergeCanvas)) {
+                this.lines.value[this.lines.value.indexOf(mergedOnto)].mergeCanvases = [];
+                this.lines.value.splice(this.lines.value.indexOf(lineToDelete), 1);
+            }
+        }
+
+        deletedLines.forEach((l) => {
+            this.linesToDelete.splice(l, 1);
+        })
     }
 }
 
@@ -192,6 +240,9 @@ onMounted(() => {
     virtualCanvas.setCanvas(drawingCanvas.value!)
 })
 
+
+provide('virtualCanvas', virtualCanvas)
+
 </script>
 
 
@@ -213,7 +264,7 @@ onMounted(() => {
         </div>
         <div class="flex flex-col items-center gap-4">
             <input v-model="virtualCanvas.brush.value.color" value="#ffffff" type="color">
-            <input v-model="virtualCanvas.brush.value.width" type="range" min="1" max="50" value="5">
+            <input v-model="virtualCanvas.brush.value.width" type="range" min="1" max="100" value="5">
             <button @click="undoClicked">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 15.75 3 12m0 0 3.75-3.75M3 12h18" />
@@ -267,5 +318,9 @@ onMounted(() => {
         background-color: white;
         width: 100%;
         height: 100%;
+    }
+
+    canvas {
+        cursor: none;
     }
 </style>

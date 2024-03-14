@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { defineProps, ref, watch, type Ref, onMounted } from "vue";
+import { defineProps, ref, watch, type Ref, onMounted, inject } from "vue";
 import type { 
     VirtualCanvas, 
     VirtualCanvasLine, 
@@ -106,6 +106,16 @@ const canvasLayer = {
         ctx?.clearRect(0,0, drawingCanvas.value!.width, drawingCanvas.value!.height);
         this.lastDrawPoint = {} as VirtualCanvasDrawPoint;
     },
+    mergeCanvases() {
+        if (!this.line.mergeCanvases) return;
+
+        for (let i = 0; i < this.line.mergeCanvases.length; i++) {
+            let ctx = drawingCanvas.value?.getContext("2d");
+            ctx?.drawImage(this.line.mergeCanvases[i], 0, 0)                
+        }
+        
+        virtualCanvas?.deleteReadyToDeleteLines(this.line)
+    },
     setNewLine(newLine: VirtualCanvasLine) {
         if(newLine != this.line) {
             canvasLayer.clearCanvas();
@@ -117,6 +127,10 @@ const canvasLayer = {
             canvasLayer.pendingDrawPoints.push(...newLine.newPoints);
             canvasLayer.drawPendingPoints();
         }
+
+        if (newLine.mergeCanvases) {
+            this.mergeCanvases();
+        }
     }
 }
 
@@ -126,6 +140,9 @@ watch(() => props.line, async (newLine: VirtualCanvasLine, oldLine: VirtualCanva
 
 watch(() => props.lastUserLine, async (newLastUserLine: VirtualCanvasLine, oldLastUserLine: VirtualCanvasLine) => {
     if (canvasLayer.line != newLastUserLine) {
+        if(drawingCanvas.value) {
+            virtualCanvas?.addReadyToMergeCanvas(canvasLayer.line, drawingCanvas.value);
+        }
         canvasLayer.isBeingDrawn = false;
     }
 })
@@ -135,6 +152,8 @@ onMounted(() => {
         canvasLayer.setNewLine(props.line)
     }
 })
+
+const virtualCanvas = inject<VirtualCanvas>("virtualCanvas")
 </script>
 
 
