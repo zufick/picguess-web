@@ -38,6 +38,7 @@ const virtualCanvas: VirtualCanvas = {
 
         data.newPoints = []
         data.userId = id;
+        data.id = Date.now() + "";
         this.lines.value.push(data);
 
         if (this.lastUserLines[id] != undefined && this.lastUserLines[id].undo) {
@@ -126,11 +127,14 @@ const virtualCanvas: VirtualCanvas = {
             let mergeBottomLayers = [] as HTMLCanvasElement[];
             let j = 0;
             while (this.lines.value[i-j] && this.lines.value[i-j].readyToMergeCanvas) {
+                console.log("Deleting ", this.lines.value[i-j])
                 mergeBottomLayers.unshift(this.lines.value[i-j].readyToMergeCanvas!)
                 this.linesToDelete.push(this.lines.value[i-j])
                 j++;
             }
+            mergeBottomLayers.shift();
             this.lines.value[i-j+1].mergeCanvases = mergeBottomLayers;
+            this.lines.value[i-j+1].newPoints = [];
             this.linesToDelete.splice(this.linesToDelete.indexOf(this.lines.value[i-j+1]), 1)
             i = i-j;
         }
@@ -243,6 +247,28 @@ onMounted(() => {
 
 provide('virtualCanvas', virtualCanvas)
 
+function shuffle(array: any) {
+  let currentIndex = array.length,  randomIndex;
+
+  // While there remain elements to shuffle.
+  while (currentIndex > 0) {
+
+    // Pick a remaining element.
+    randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex--;
+
+    // And swap it with the current element.
+    [array[currentIndex], array[randomIndex]] = [
+      array[randomIndex], array[currentIndex]];
+  }
+
+  return array;
+}
+
+function shuffleff() {
+    virtualCanvas.lines.value = shuffle(virtualCanvas.lines.value);
+}
+
 </script>
 
 
@@ -258,7 +284,7 @@ provide('virtualCanvas', virtualCanvas)
                 @mouseenter="mouseEnter"
                 @mouseleave="mouseLeave">
             </canvas>
-            <DrawingCanvasLayer v-for="line in virtualCanvas.lines.value" :line="line" :lastUserLine="virtualCanvas.lastUserLines[line.userId!]"/>
+            <DrawingCanvasLayer v-for="line in virtualCanvas.lines.value" :line="line" :key="line.id + '_' + line.color" :lastUserLine="virtualCanvas.lastUserLines[line.userId!]"/>
 
             <DrawingBrushPreview :brush="virtualCanvas.brush.value"/>
         </div>
@@ -295,6 +321,7 @@ provide('virtualCanvas', virtualCanvas)
 
             </div>
             <button @click="eraserClicked()">E</button>
+            <button @click="shuffleff"></button>
         </div>
     </div>
 </template>

@@ -29,6 +29,7 @@ export type VirtualCanvas = {
 export type VirtualCanvasDrawPoint = { x: number, y: number };
 
 export type VirtualCanvasLine = {
+    id?: string,
     userId?: string,
     color: string,
     width: number,
