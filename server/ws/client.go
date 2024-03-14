@@ -3,6 +3,7 @@ package ws
 import (
 	"errors"
 	"game-server/game"
+	"strconv"
 
 	"github.com/gorilla/websocket"
 )
@@ -34,9 +35,10 @@ func (c *Client) JoinRoomById(roomId string, userInfo UserInfo) error {
 	if rooms[roomId] == nil || rooms[roomId].game != nil {
 		return errors.New("Room not found")
 	}
-	lastUserIdInRoom++
-	c.id = lastUserIdInRoom
+	rooms[roomId].lastUserIdInRoom++
+	c.id = rooms[roomId].lastUserIdInRoom
 	c.userInfo = userInfo
+	c.userInfo.Id = strconv.Itoa(c.id)
 
 	c.room = rooms[roomId]
 	c.room.register <- c

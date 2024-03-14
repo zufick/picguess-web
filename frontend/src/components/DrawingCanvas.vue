@@ -1,156 +1,158 @@
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { nextTick, onMounted, provide, ref } from "vue";
 import { useWebsocketStore } from "@/stores/WebsocketStore";
 import type { 
     VirtualCanvas, 
-    VirtualCanvasLineData, 
-    VirtualCanvasDrawPoint 
+    VirtualCanvasLine, 
+    VirtualCanvasDrawPoint, 
+    VirtualCanvasBrush
 } from '@/types/VirtualCanvas'
+import DrawingCanvasLayer from "./DrawingCanvasLayer.vue";
+import DrawingBrushPreview from "./DrawingBrushPreview.vue";
 
 const wsStore = useWebsocketStore();
 const drawingCanvas = ref<InstanceType<typeof HTMLCanvasElement>>();
-const drawColor = ref("#000000")
-const drawWidth = ref(5)
 const drawClearDialog = ref(false)
 
 const virtualCanvas: VirtualCanvas = {
     canvas: undefined,
-    lines: {},
-    undoLines: {},
-    drawCalls: 0,
+    brush: ref(<VirtualCanvasBrush>{
+        color: "#000000",
+        width: 5,
+        point: {
+            x: 0,
+            y: 0,
+        },
+        visible: false,
+    }),
+    lines: ref([]),
+    linesToDelete: [],
+    lastUserLines: {},
     sendPointsBuffer: [],
     sendPointsBufferLimit: 5,
     setCanvas(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
     },
-    startNewLine(id: string, data: VirtualCanvasLineData) {
+    startNewLine(id: string, data: VirtualCanvasLine) {
         this.sendPointsBuffer = []
 
-        if (this.lines[id] == undefined) {
-            this.lines[id] = []
+        data.newPoints = []
+        data.userId = id;
+        data.id = Date.now() + "";
+        this.lines.value.push(data);
+
+        if (this.lastUserLines[id] != undefined && this.lastUserLines[id].undo) {
+            this.lines.value.splice(this.lines.value.indexOf(this.lastUserLines[id]), 1);
         }
 
-        let totalLayers = Object.values(this.lines).flat(1).length
-        data.layerIndex = totalLayers
-        this.lines[id].push(data);
-
-        if (this.undoLines[id] != undefined) {
-            this.undoLines[id] = []
-            console.log(this.undoLines)
-        }
+        this.lastUserLines[id] = data
     },
-    startNewLocalLine(data: VirtualCanvasLineData) {
+    startNewLocalLine(data: VirtualCanvasLine) {
         this.startNewLine("local", data)
     },
     drawLocalPoint(point: VirtualCanvasDrawPoint) {
         this.sendPointsBuffer.push(point.x, point.y)
-        this.drawPoint("local", point)
+
+        try {
+            this.drawPoint("local", point)
+
+
+        } catch (e) {
+            console.error(e)
+        }
 
         if (this.sendPointsBuffer.length >= 2 * this.sendPointsBufferLimit) {
-            wsStore.sendDrawPoints(this.sendPointsBuffer)
-            this.sendPointsBuffer = []
-        }
+                wsStore.sendDrawPoints(this.sendPointsBuffer)
+                this.sendPointsBuffer = []
+            }
     },
     drawPoint(id: string, point: VirtualCanvasDrawPoint) {
-        let line = this.lines[id];
-        if(line[line.length - 1].points == undefined) {
-            line[line.length - 1].points = [];
-        }
-        line[line.length - 1].points.push(point);
-
-        this.redrawCanvas();
+        this.drawPoints(id, [point])
     },
-    drawPoints(id: string, points: number[]) {
-        let line = this.lines[id];
-        if(line[line.length - 1].points == undefined) {
-            line[line.length - 1].points = [];
-        }
+    drawPointArray(id: string, points: number[]) {
+        let pointObjects = [];
 
-        for (let i = 0; i < points.length; i+=2) {
-            let point = {
+        for (let i = 0; i < points.length; i += 2) {
+            pointObjects.push({
                 x: points[i],
-                y: points[i+1]
-            }
-            line[line.length - 1].points.push(point);
+                y: points[i+1],
+            })
         }
-
-
-        this.redrawCanvas();
+        this.drawPoints(id, pointObjects);
     },
-    redrawCanvas() {
-        window.requestAnimationFrame(() => this.redrawCanvasLoop())
-    },
-    redrawCanvasLoop() {
-        this.drawCalls = 0;
-
-        let ctx = this.canvas?.getContext("2d");
-        ctx!.clearRect(0, 0, this.canvas!.width, this.canvas!.height);
-
-
-        let lines = Object.values(this.lines).flat(1)
-        lines.sort((a,b) => a.layerIndex! - b.layerIndex!)
-
-        for (let i = 0; i < lines.length; i++) {
-            let line = lines[i]
-
-            ctx!.lineWidth = line.width;
-            ctx!.lineCap = "round";
-            ctx!.strokeStyle = line.color;
-            
-            if (line.points != undefined) {
-                line.points.forEach(point => {
-                    //if (lastPoint.x != 0) {
-                    //    ctx?.moveTo(lastPoint.x, lastPoint.y);    
-                    //}
-                    ctx?.lineTo(point.x, point.y);
-                    this.drawCalls++;
-                    //lastPoint = point;
-                });
-
-            }
-            ctx?.stroke();
-            ctx?.beginPath();
+    drawPoints(id: string, points: VirtualCanvasDrawPoint[]) {
+        let line = this.lastUserLines[id];
+        if(this.lines.value.indexOf(line) == -1) {
+            console.error("line -1", this.lines.value, line)
+            return;
         }
+        this.lines.value[this.lines.value.indexOf(line)].newPoints = points;
     },
     undoLine(id: string) {
-        if(this.lines[id] == undefined) {
+        if(this.lastUserLines[id] == undefined) {
             return;
         }
-        if(this.undoLines[id] == undefined) {
-            this.undoLines[id] = [];
-        }
 
-        let line = this.lines[id].pop()!;
-        if (line != undefined) {
-            this.undoLines[id].push(line);
-        }
-
-        this.redrawCanvas();
+        this.lines.value[this.lines.value.indexOf(this.lastUserLines[id])].undo = true;
     },
     redoLine(id: string) {
-        if(this.undoLines[id] == undefined) {
+        if(this.lastUserLines[id] == undefined) {
             return;
         }
-        if(this.lines[id] == undefined) {
-            this.lines[id] = [];
-        }
 
-        let line = this.undoLines[id].pop()!;
-        if (line != undefined) {
-            this.lines[id].push(line);
-        }
-
-        this.redrawCanvas();
+        this.lines.value[this.lines.value.indexOf(this.lastUserLines[id])].undo = false;
     },
     drawClear(id: string) {
-        if (id == "") {
-            this.lines = {};
-            this.undoLines = {};
-        } else {
-            this.lines[id] = [];
+        if (id != "") {
+            wsStore.roomState.clients.forEach((u) => {
+                if (u.id == id) {
+                    alert(`User ${u.username} cleared canvas`)
+                }
+            });
         }
 
-        this.redrawCanvas();
+        this.lines.value = []
+    },
+    addReadyToMergeCanvas(line: VirtualCanvasLine, canvas: HTMLCanvasElement) {
+        if(line.readyToMergeCanvas) { return; }
+        this.lines.value[this.lines.value.indexOf(line)].readyToMergeCanvas = canvas;
+        this.mergeReadyCanvases();
+    },
+    mergeReadyCanvases() {
+        for(let i = this.lines.value.length - 1; i >= 0; i--) {
+            let line = this.lines.value[i];
+            if(!line || !line.readyToMergeCanvas)
+                continue;
+            
+            let mergeBottomLayers = [] as HTMLCanvasElement[];
+            let j = 0;
+            while (this.lines.value[i-j] && this.lines.value[i-j].readyToMergeCanvas) {
+                console.log("Deleting ", this.lines.value[i-j])
+                mergeBottomLayers.unshift(this.lines.value[i-j].readyToMergeCanvas!)
+                this.linesToDelete.push(this.lines.value[i-j])
+                j++;
+            }
+            mergeBottomLayers.shift();
+            this.lines.value[i-j+1].mergeCanvases = mergeBottomLayers;
+            this.lines.value[i-j+1].newPoints = [];
+            this.linesToDelete.splice(this.linesToDelete.indexOf(this.lines.value[i-j+1]), 1)
+            i = i-j;
+        }
+    },
+    deleteReadyToDeleteLines(mergedOnto: VirtualCanvasLine) {
+        let deletedLines = []
+        for (let i = 0; i < this.linesToDelete.length; i++) {
+            deletedLines.push(i);
+            let lineToDelete = this.linesToDelete[i];
+            if (mergedOnto.mergeCanvases && lineToDelete.readyToMergeCanvas && mergedOnto.mergeCanvases?.includes(lineToDelete.readyToMergeCanvas)) {
+                this.lines.value[this.lines.value.indexOf(mergedOnto)].mergeCanvases = [];
+                this.lines.value.splice(this.lines.value.indexOf(lineToDelete), 1);
+            }
+        }
+
+        deletedLines.forEach((l) => {
+            this.linesToDelete.splice(l, 1);
+        })
     }
 }
 
@@ -164,40 +166,42 @@ type DrawData = {
 let isMouseDown = false;
 
 function mouseMove(event: MouseEvent) {
+    let rect = drawingCanvas.value?.getBoundingClientRect();
+    virtualCanvas.brush.value.point = {
+        x: Math.floor(event.clientX - rect!.left ?? 0),
+        y: Math.floor(event.clientY - rect!.top ?? 0),
+    };
+
     if(!isMouseDown) { return; }
 
     drawEventPoint(event);
 }
 
-function mouseDown(event: any) {
+function mouseDown(event: MouseEvent) {
     isMouseDown = true;
     
     virtualCanvas.startNewLocalLine({
-        color: drawColor.value,
-        width: drawWidth.value,
-        points: []
+        color: virtualCanvas.brush.value.color,
+        width: virtualCanvas.brush.value.width,
     })
 
     wsStore.sendDrawNewLine({ 
-        color: drawColor.value, 
-        width: drawWidth.value 
+        color: virtualCanvas.brush.value.color, 
+        width: virtualCanvas.brush.value.width 
     });
 
     drawEventPoint(event);
 }
 
-function drawEventPoint(event: any) {
+function drawEventPoint(event: MouseEvent) {
     let rect = drawingCanvas.value?.getBoundingClientRect();
-    let point = { 
-        x: Math.floor(event.clientX - rect!.left ?? 0),
-        y: Math.floor(event.clientY - rect!.top ?? 0),
-    }
+    let point = virtualCanvas.brush.value.point;
 
     virtualCanvas.drawLocalPoint(point)
 
 }
 
-function mouseUp(event: any) {
+function mouseUp(event: MouseEvent) {
     isMouseDown = false;
 
     if(virtualCanvas.sendPointsBuffer.length > 0) {
@@ -205,6 +209,14 @@ function mouseUp(event: any) {
         virtualCanvas.sendPointsBuffer = []
     }
     
+}
+
+function mouseEnter(event: MouseEvent) {
+    virtualCanvas.brush.value.visible = true;
+}
+
+function mouseLeave(event: MouseEvent) {
+    virtualCanvas.brush.value.visible = false;
 }
 
 function undoClicked() {
@@ -223,11 +235,17 @@ function drawClearClicked() {
     drawClearDialog.value = false
 }
 
-wsStore.setVirtualCanvas(virtualCanvas)
+function eraserClicked() {
+    virtualCanvas.brush.value.color = "#ffffff"
+}
 
+wsStore.setVirtualCanvas(virtualCanvas)
 onMounted(() => {
     virtualCanvas.setCanvas(drawingCanvas.value!)
 })
+
+
+provide('virtualCanvas', virtualCanvas)
 </script>
 
 
@@ -235,12 +253,21 @@ onMounted(() => {
     <div class="flex gap-4">
         <div class="canvas-container border-2 rounded-lg border-white/20 overflow-hidden">
             <div class="canvas-bg"></div>
-            <canvas ref="drawingCanvas" height="768" width="1024" @mousemove="mouseMove" @mousedown="mouseDown" @mouseup="mouseUp" @mouseout="mouseUp">
+            <canvas ref="drawingCanvas" height="768" width="1024" 
+                @mousemove="mouseMove" 
+                @mousedown="mouseDown" 
+                @mouseup="mouseUp" 
+                @mouseout="mouseUp"
+                @mouseenter="mouseEnter"
+                @mouseleave="mouseLeave">
             </canvas>
+            <DrawingCanvasLayer v-for="line in virtualCanvas.lines.value" :line="line" :key="line.id + '_' + line.color" :lastUserLine="virtualCanvas.lastUserLines[line.userId!]"/>
+
+            <DrawingBrushPreview :brush="virtualCanvas.brush.value"/>
         </div>
         <div class="flex flex-col items-center gap-4">
-            <input v-model="drawColor" value="#ffffff" type="color">
-            <input v-model="drawWidth" type="range" min="1" max="50" value="5">
+            <input v-model="virtualCanvas.brush.value.color" value="#ffffff" type="color">
+            <input v-model="virtualCanvas.brush.value.width" type="range" min="1" max="100" value="5">
             <button @click="undoClicked">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 15.75 3 12m0 0 3.75-3.75M3 12h18" />
@@ -268,7 +295,9 @@ onMounted(() => {
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
                     </svg>
                 </button>
+
             </div>
+            <button @click="eraserClicked()">E</button>
         </div>
     </div>
 </template>
@@ -292,5 +321,9 @@ onMounted(() => {
         background-color: white;
         width: 100%;
         height: 100%;
+    }
+
+    canvas {
+        cursor: none;
     }
 </style>

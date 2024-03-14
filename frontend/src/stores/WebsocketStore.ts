@@ -10,6 +10,7 @@ import type { RoomState } from '@/types/RoomState';
 export const useWebsocketStore = () => { 
   const gameStore = useGameStore();
   const router = useRouter();
+  let virtualCanvas: VirtualCanvas;
 
   const innerStore = defineStore('websocket', {
     state: () => ({ 
@@ -17,7 +18,6 @@ export const useWebsocketStore = () => {
       connectionError: false,
       joinedRoomId: "",
       roomState: {} as RoomState,
-      virtualCanvas: undefined as VirtualCanvas | undefined,
     }),
     getters: {
       isConnected() : Boolean {
@@ -56,7 +56,7 @@ export const useWebsocketStore = () => {
           }
 
           if ("xy" in jsonData) {
-            this.virtualCanvas?.drawPoints(jsonData.id, jsonData.xy);
+            virtualCanvas?.drawPointArray(jsonData.id, jsonData.xy);
             return;
           }
 
@@ -80,30 +80,30 @@ export const useWebsocketStore = () => {
               break;
             }
             case "draw_new": {
-              this.virtualCanvas?.startNewLine(jsonData.id, jsonData.data)
+              virtualCanvas?.startNewLine(jsonData.id, jsonData.data)
               break;
             }
             case "draw_xy": {
-              this.virtualCanvas?.drawPoint(jsonData.id, jsonData.point);
+              virtualCanvas?.drawPoint(jsonData.id, jsonData.point);
               break;
             }
             case "draw_undo": {
-              this.virtualCanvas?.undoLine(jsonData.id);
+              virtualCanvas?.undoLine(jsonData.id);
               break;
             }
             case "draw_redo": {
-              this.virtualCanvas?.redoLine(jsonData.id);
+              virtualCanvas?.redoLine(jsonData.id);
               break;
             }
             case "draw_clear": {
-              this.virtualCanvas?.drawClear(jsonData.id);
+              virtualCanvas?.drawClear(jsonData.id);
               break;
             }
           }
         });
       },
       setVirtualCanvas(canvas: VirtualCanvas) {
-        this.virtualCanvas = canvas;
+        virtualCanvas = canvas;
       },
       joinRoom(roomId: String, userInfo: UserInfo) {
         this.ws?.send(JSON.stringify({cmd: "join", room_id: roomId, user_info: userInfo}))

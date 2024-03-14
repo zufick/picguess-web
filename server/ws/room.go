@@ -19,6 +19,8 @@ type Room struct {
 
 	game *game.Game
 
+	lastUserIdInRoom int
+
 	// Registered clients.
 	clients map[*Client]bool
 
@@ -36,7 +38,6 @@ type Room struct {
 }
 
 var rooms = make(map[string]*Room)
-var lastUserIdInRoom = 0
 
 func newRoom() *Room {
 	id, err := uuid.NewUUID()
@@ -46,6 +47,7 @@ func newRoom() *Room {
 
 	room := &Room{
 		id:                  id.String(),
+		lastUserIdInRoom:    0,
 		broadcastFromClient: make(chan BroadcastSenderInfo),
 		broadcast:           make(chan []byte),
 		register:            make(chan *Client),
