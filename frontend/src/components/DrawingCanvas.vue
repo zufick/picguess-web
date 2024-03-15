@@ -45,7 +45,8 @@ const virtualCanvas: VirtualCanvas = {
             this.lines.value.splice(this.lines.value.indexOf(this.lastUserLines[id]), 1);
         }
 
-        this.lastUserLines[id] = data
+        this.lastUserLines[id] = data;
+        this.mergeReadyCanvases();
     },
     startNewLocalLine(data: VirtualCanvasLine) {
         this.startNewLine("local", data)
@@ -127,7 +128,6 @@ const virtualCanvas: VirtualCanvas = {
             let mergeBottomLayers = [] as HTMLCanvasElement[];
             let j = 0;
             while (this.lines.value[i-j] && this.lines.value[i-j].readyToMergeCanvas) {
-                console.log("Deleting ", this.lines.value[i-j])
                 mergeBottomLayers.unshift(this.lines.value[i-j].readyToMergeCanvas!)
                 this.linesToDelete.push(this.lines.value[i-j])
                 j++;
@@ -142,11 +142,11 @@ const virtualCanvas: VirtualCanvas = {
     deleteReadyToDeleteLines(mergedOnto: VirtualCanvasLine) {
         let deletedLines = []
         for (let i = 0; i < this.linesToDelete.length; i++) {
-            deletedLines.push(i);
             let lineToDelete = this.linesToDelete[i];
             if (mergedOnto.mergeCanvases && lineToDelete.readyToMergeCanvas && mergedOnto.mergeCanvases?.includes(lineToDelete.readyToMergeCanvas)) {
-                this.lines.value[this.lines.value.indexOf(mergedOnto)].mergeCanvases = [];
+                this.lines.value[this.lines.value.indexOf(mergedOnto)].mergeCanvases?.splice(mergedOnto.mergeCanvases?.indexOf(lineToDelete.readyToMergeCanvas), 1)
                 this.lines.value.splice(this.lines.value.indexOf(lineToDelete), 1);
+                deletedLines.push(i);
             }
         }
 

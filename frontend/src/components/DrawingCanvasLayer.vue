@@ -136,13 +136,11 @@ const canvasLayer = {
 
 watch(() => props.line, async (newLine: VirtualCanvasLine, oldLine: VirtualCanvasLine) => {
     canvasLayer.setNewLine(newLine);
-    console.log('%c new line', 'background: '+ canvasLayer.line.color +'; color: #ffffff', newLine, oldLine);
 },   {deep: true})
 
 watch(() => props.lastUserLine, async (newLastUserLine: VirtualCanvasLine, oldLastUserLine: VirtualCanvasLine) => {
     if (canvasLayer.line != newLastUserLine) {
-        if(drawingCanvas.value) {
-//            console.log('%c new last user line, addReadyToMergeCanvas', 'background: '+ canvasLayer.line.color +'; color: #ffffff', newLastUserLine, oldLastUserLine);
+        if(drawingCanvas.value && canvasLayer.pendingDrawPoints.length <= 0) {
             virtualCanvas?.addReadyToMergeCanvas(canvasLayer.line, drawingCanvas.value);
         }
         canvasLayer.isBeingDrawn = false;
