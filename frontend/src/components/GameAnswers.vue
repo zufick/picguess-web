@@ -4,8 +4,8 @@ const gameStore = useGameStore();
 
 function getUnansweredCount() {
     if (gameStore.gameState.player.answerResults == undefined)
-        return gameStore.gameState.player.opponentWinWords.length;
-    return gameStore.gameState.player.opponentWinWords.length - gameStore.gameState.player.answerResults.length;
+        return gameStore.gameState.player.wordPool.length;
+    return gameStore.gameState.player.wordPool.length - gameStore.gameState.player.answerResults.length;
 }
 
 </script>

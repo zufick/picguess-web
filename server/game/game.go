@@ -12,15 +12,6 @@ type AnswerResults struct {
 	IsCorrect bool   `json:"isCorrect"`
 }
 
-type Player struct {
-	Score            int             `json:"score"`
-	WordPool         []string        `json:"wordPool"`
-	OpponentWinWords []string        `json:"opponentWinWords"`
-	AnswerResults    []AnswerResults `json:"answerResults"`
-	OpponentResults  []AnswerResults `json:"opponentResults"`
-	Opponent         *Player         `json:"-"`
-}
-
 type Game struct {
 	players        map[*Player]bool
 	wordsPerPlayer int
@@ -75,7 +66,7 @@ func (g *Game) Start() {
 }
 
 func (g *Game) AnswerWord(p *Player, answer string) {
-	if p == nil || len(p.AnswerResults) >= g.wordsToWin {
+	if p == nil || len(p.AnswerResults) >= g.wordsPerPlayer || len(p.GetCorrectAnswers()) >= g.wordsToWin {
 		return
 	}
 
@@ -113,12 +104,17 @@ func (g *Game) AnswerWord(p *Player, answer string) {
 
 func (g *Game) CheckWin() {
 	wordsRequired := len(g.players) * g.wordsToWin
-	answeredWords := 0
+	correctAnsweredWords := 0
 
 	var playerWithMostScore *Player
 
 	for p := range g.players {
-		answeredWords += len(p.AnswerResults)
+
+		for _, a := range p.AnswerResults {
+			if a.IsCorrect {
+				correctAnsweredWords++
+			}
+		}
 
 		if playerWithMostScore == nil {
 			playerWithMostScore = p
@@ -129,7 +125,7 @@ func (g *Game) CheckWin() {
 		}
 	}
 
-	if answeredWords >= wordsRequired {
+	if correctAnsweredWords >= wordsRequired {
 		g.winner = playerWithMostScore
 	}
 }
