@@ -17,6 +17,7 @@ export const useWebsocketStore = () => {
       ws: undefined as WebSocket | undefined, 
       connectionError: false,
       joinedRoomId: "",
+      localUserId: "",
       roomState: {} as RoomState,
     }),
     getters: {
@@ -64,11 +65,11 @@ export const useWebsocketStore = () => {
 
           switch (jsonData.cmd) {
             case "created_room": {
-              this.setJoinedRoomId(jsonData.room_id)
+              this.setJoinedRoomId(jsonData.room_id, jsonData.local_user_id)
               break;
             }
             case "joined_room": {
-              this.setJoinedRoomId(jsonData.room_id)
+              this.setJoinedRoomId(jsonData.room_id, jsonData.local_user_id)
               break;
             }
             case "roomstate": {
@@ -123,14 +124,15 @@ export const useWebsocketStore = () => {
       sendDrawRedo(){
         this.ws?.send(JSON.stringify({cmd: "draw_redo"}))
       },
-      sendDrawClear() {
-        this.ws?.send(JSON.stringify({cmd: "draw_clear"}))
+      sendDrawClear(voted: boolean) {
+        this.ws?.send(JSON.stringify({cmd: "draw_clear", voted}))
       },
       startGame() {
         this.ws?.send(JSON.stringify({cmd: "game_start"}))
       },
-      setJoinedRoomId(id: string) {
+      setJoinedRoomId(id: string, localUserId: string) {
         this.joinedRoomId = id;
+        this.localUserId = localUserId
         router.push(`/room/${id}`)
       },
       pickAnswer(answer: string) {

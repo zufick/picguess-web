@@ -4,5 +4,6 @@ export type RoomState = {
             id: string,
             username: string
         }
-    ]
+    ],
+    vote_clearcanvas: []
 }

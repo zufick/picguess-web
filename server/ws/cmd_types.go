@@ -57,9 +57,15 @@ type JsonMessageCmdGame_answer struct {
 	Answer string `json:"answer"`
 }
 
+type JsonMessageCmdDraw_clear struct {
+	Cmd   string `json:"cmd"`
+	Voted bool   `json:"voted"`
+}
+
 type RoomStateBroadcastData struct {
-	Cmd         string     `json:"cmd"`
-	ClientInfos []UserInfo `json:"clients"`
+	Cmd             string       `json:"cmd"`
+	ClientInfos     []UserInfo   `json:"clients"`
+	VoteClearCanvas map[int]bool `json:"vote_clearcanvas"`
 }
 
 type GameStateBroadcast struct {

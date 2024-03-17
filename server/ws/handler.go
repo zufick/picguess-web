@@ -6,6 +6,7 @@ import (
 	"game-server/game"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -133,11 +134,14 @@ func (c *Client) messageHandler(conn *websocket.Conn, rawMessage []byte) {
 		var data JsonMessageCmdGame_answer
 		json.Unmarshal(rawMessage, &data)
 		gameAnswerHandler(c, &data)
+	case MessageCmdDraw_clear:
+		var data JsonMessageCmdDraw_clear
+		json.Unmarshal(rawMessage, &data)
+		c.room.VoteClearCanvas(c, data.Voted)
 	case MessageCmdDraw_new,
 		MessageCmdDraw_xy,
 		MessageCmdDraw_undo,
-		MessageCmdDraw_redo,
-		MessageCmdDraw_clear:
+		MessageCmdDraw_redo:
 		c.room.broadcastFromClient <- BroadcastSenderInfo{Sender: c.id, Data: rawMessage}
 	}
 
@@ -155,7 +159,7 @@ func createRoomHandler(c *Client, m *JsonMessageCmdCreate) {
 		return
 	}
 
-	c.send <- []byte(fmt.Sprintf("{ \"cmd\": \"created_room\", \"room_id\": \"%s\" }", room.id))
+	c.send <- []byte(fmt.Sprintf("{ \"cmd\": \"created_room\", \"room_id\": \"%s\", \"local_user_id\": \"%s\" }", room.id, strconv.Itoa(c.id)))
 }
 
 func joinRoomHandler(c *Client, m *JsonMessageCmdJoin) {
@@ -163,7 +167,7 @@ func joinRoomHandler(c *Client, m *JsonMessageCmdJoin) {
 		return
 	}
 
-	c.send <- []byte(fmt.Sprintf("{ \"cmd\": \"joined_room\", \"room_id\": \"%s\" }", m.RoomId))
+	c.send <- []byte(fmt.Sprintf("{ \"cmd\": \"joined_room\", \"room_id\": \"%s\", \"local_user_id\": \"%s\" }", m.RoomId, strconv.Itoa(c.id)))
 }
 
 func gameStartHandler(c *Client) {

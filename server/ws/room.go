@@ -24,6 +24,8 @@ type Room struct {
 	// Registered clients.
 	clients map[*Client]bool
 
+	clearCanvasVotes map[*Client]bool
+
 	// Inbound messages from the clients.
 	broadcastFromClient chan BroadcastSenderInfo
 
@@ -53,6 +55,7 @@ func newRoom() *Room {
 		register:            make(chan *Client),
 		unregister:          make(chan *Client),
 		clients:             make(map[*Client]bool),
+		clearCanvasVotes:    make(map[*Client]bool),
 	}
 	go room.run()
 	rooms[room.id] = room
@@ -64,13 +67,13 @@ func (r *Room) run() {
 		select {
 		case client := <-r.register:
 			r.clients[client] = true
-			go r.broadcastGameState()
+			go r.broadcastRoomState()
 		case client := <-r.unregister:
 			if _, ok := r.clients[client]; ok {
 				delete(r.clients, client)
 				close(client.send)
 			}
-			go r.broadcastGameState()
+			go r.broadcastRoomState()
 		case message := <-r.broadcastFromClient:
 			var messageMap map[string]json.RawMessage
 			err := json.Unmarshal(message.Data, &messageMap)
@@ -110,16 +113,60 @@ func (r *Room) run() {
 	}
 }
 
-func (r *Room) broadcastGameState() {
+func (r *Room) VoteClearCanvas(c *Client, voted bool) {
+	r.clearCanvasVotes[c] = voted
+	firstVoterId := -1
+
+	if len(r.clearCanvasVotes) >= len(r.clients) {
+		inFavor := 0
+		for c, voted := range r.clearCanvasVotes {
+			if firstVoterId == -1 {
+				firstVoterId = c.id
+			}
+
+			if voted {
+				inFavor++
+			}
+		}
+
+		if len(r.clearCanvasVotes) >= len(r.clients) {
+			r.clearCanvasVotes = make(map[*Client]bool)
+
+			if inFavor > len(r.clients)/2 {
+				c.room.broadcast <- []byte("{ \"cmd\": \"draw_clear\" }")
+			}
+		}
+	}
+
+	go r.broadcastRoomState()
+}
+
+func (r *Room) GetClearCanvasVoteResults() []bool {
+	var results []bool
+	for _, v := range r.clearCanvasVotes {
+		results = append(results, v)
+	}
+
+	fmt.Println(results)
+	return results
+}
+
+func (r *Room) broadcastRoomState() {
 	var clientsInfo []UserInfo
 
 	for client := range r.clients {
 		clientsInfo = append(clientsInfo, client.userInfo)
 	}
 
+	clearCanvasVotes := make(map[int]bool)
+	for c, v := range r.clearCanvasVotes {
+		clearCanvasVotes[c.id] = v
+	}
+
 	roomState := &RoomStateBroadcastData{
-		Cmd:         "roomstate",
-		ClientInfos: clientsInfo,
+		Cmd:             "roomstate",
+		ClientInfos:     clientsInfo,
+		VoteClearCanvas: clearCanvasVotes,
 	}
 
 	roomStateJson, err := json.Marshal(roomState)
