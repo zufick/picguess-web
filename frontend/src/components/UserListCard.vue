@@ -39,7 +39,7 @@ watch(() => props.score, (newValue: string, oldValue: string) => {
             <span>{{ user.username }}</span>
             <span class="ml-4 score-text relative" :class="{'score-gained': scoreGained, 'score-lost': scoreLost}">
                 Score: {{props.score}}
-                <span class="absolute score-diff px-4" :class="{'score-diff-slide-anim' : scoreDiffAnim, 'text-rose-600' : scoreLost, 'text-emerald-400': scoreGained}">{{ scoreDiff }}</span>
+                <span class="absolute score-diff px-4" :class="{'score-diff-slide-anim' : scoreDiffAnim, 'text-rose-600' : scoreLost, 'text-emerald-400': scoreGained}"><span v-if="scoreGained">+</span>{{ scoreDiff }}</span>
             </span>
         </div>
     </div>
