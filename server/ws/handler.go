@@ -180,7 +180,7 @@ func gameStartHandler(c *Client) {
 	room.game = game.NewGame()
 
 	for c := range room.clients {
-		c.player = room.game.NewPlayer()
+		c.player = room.game.NewPlayer(c.id)
 		c.send <- []byte("{ \"cmd\": \"draw_clear\", \"id\": \"\" }")
 	}
 
@@ -217,16 +217,27 @@ func gameStateHandler(r *Room) {
 			}
 		}
 
+		var players []GameStateBroadcastPlayerList
+
+		for _, p := range r.game.GetPlayers() {
+			players = append(players, GameStateBroadcastPlayerList{
+				Id:    p.Id,
+				Score: p.Score,
+			})
+		}
+
 		for c := range r.clients {
 
 			gsb := &GameStateBroadcast{
 				Cmd: MessageCmdGameState,
 				State: struct {
-					Player *game.Player              "json:\"player\""
-					Winner *GameStateBroadcastWinner "json:\"winner\""
+					Player  *game.Player                   "json:\"player\""
+					Players []GameStateBroadcastPlayerList "json:\"players\""
+					Winner  *GameStateBroadcastWinner      "json:\"winner\""
 				}{
-					Player: c.player,
-					Winner: winner,
+					Player:  c.player,
+					Players: players,
+					Winner:  winner,
 				},
 			}
 

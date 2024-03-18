@@ -30,8 +30,9 @@ func NewGame() *Game {
 	}
 }
 
-func (g *Game) NewPlayer() *Player {
+func (g *Game) NewPlayer(id int) *Player {
 	p := &Player{
+		Id:            id,
 		Score:         0,
 		AnswerResults: make([]AnswerResults, 0),
 	}
@@ -132,4 +133,14 @@ func (g *Game) CheckWin() {
 
 func (g *Game) GetWinner() *Player {
 	return g.winner
+}
+
+func (g *Game) GetPlayers() []*Player {
+	var players []*Player
+
+	for p := range g.players {
+		players = append(players, p)
+	}
+
+	return players
 }

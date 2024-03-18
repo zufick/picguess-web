@@ -1,6 +1,7 @@
 package game
 
 type Player struct {
+	Id               int             `json:"id"`
 	Score            int             `json:"score"`
 	WordPool         []string        `json:"wordPool"`
 	OpponentWinWords []string        `json:"opponentWinWords"`

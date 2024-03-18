@@ -71,9 +71,15 @@ type RoomStateBroadcastData struct {
 type GameStateBroadcast struct {
 	Cmd   string `json:"cmd"`
 	State struct {
-		Player *game.Player              `json:"player"`
-		Winner *GameStateBroadcastWinner `json:"winner"`
+		Player  *game.Player                   `json:"player"`
+		Players []GameStateBroadcastPlayerList `json:"players"`
+		Winner  *GameStateBroadcastWinner      `json:"winner"`
 	} `json:"gamestate"`
+}
+
+type GameStateBroadcastPlayerList struct {
+	Id    int `json:"id"`
+	Score int `json:"score"`
 }
 
 type GameStateBroadcastWinner struct {

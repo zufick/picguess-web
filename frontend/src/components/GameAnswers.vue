@@ -16,10 +16,7 @@ function getUnansweredCount() {
             <div v-for="answer in gameStore.gameState.player.answerResults" class="answer border-2 border-stone-700"
             :class="{ 'correct': answer.isCorrect, 'wrong': !answer.isCorrect }"
             ></div>
-            <div v-for="n in getUnansweredCount()" class="answer border-2 border-stone-700"></div>
-        </div>
-        <div class="score-container">
-            <span>Score: {{  gameStore.gameState.player.score }}</span>
+            <!--<div v-for="n in getUnansweredCount()" class="answer border-2 border-stone-700"></div>-->
         </div>
     </div>
 </template>
@@ -61,11 +58,5 @@ function getUnansweredCount() {
         background: rgb(2 44 34);
         color: rgb(52 211 153);
         border: 1px solid rgb(52 211 153);
-    }
-
-    .score-container{
-        position: absolute;
-        bottom: -60px;
-        font-size: 2rem;
     }
 </style>

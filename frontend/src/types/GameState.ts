@@ -10,6 +10,7 @@ export type GameState = {
             { answer: string, isCorrect: boolean }
         ],
     },
+    players: [{ id: number, score: number }]
     winner: {
         
     }

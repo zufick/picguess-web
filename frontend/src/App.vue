@@ -45,8 +45,7 @@ onMounted(() => {
         <div v-if="wsStore.isConnected">
             <JoinRoomWindow v-if="!wsStore.isJoinedRoom" />
             <div v-else>
-                <p>Joined room <br> <b>{{ wsStore.joinedRoomId  }}</b></p>
-                <UserList/>
+                <UserList class="mb-2"/>
                 <GameWindow v-if="gameStore.gameState.player"/>
                 <button v-else @click="wsStore.startGame()">Start game</button>
             </div>
