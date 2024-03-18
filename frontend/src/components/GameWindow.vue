@@ -41,7 +41,7 @@ function getWrongOpponentWords() {
 
 <template>
     <div class="relative">
-        <div class="flex gap-2 word-container">
+        <div class="flex gap-2 word-container my-2">
             <div class="p-2 px-4 bg-stone-900 rounded-md border-2 border-stone-700" 
             v-for="opponentWord in gameStore.gameState.player.opponentWinWords"
             :class="{ 
@@ -67,10 +67,7 @@ function getWrongOpponentWords() {
 
 <style scoped>
     .word-container {
-        position: absolute;
-        padding: 20px;
         pointer-events: none;
-        z-index: 10;
     }
 
     .word-container-wrong {
@@ -79,6 +76,7 @@ function getWrongOpponentWords() {
         pointer-events: none;
         z-index: 10;
         bottom: 0;
+        opacity: .5;
     }
 
     .container > * {

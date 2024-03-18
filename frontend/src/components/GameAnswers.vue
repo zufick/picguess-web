@@ -11,7 +11,7 @@ function getUnansweredCount() {
 </script>
 
 <template>
-    <div class="container">
+    <div class="res-container">
         <div class="middle-container">
             <div v-for="answer in gameStore.gameState.player.answerResults" class="answer border-2 border-stone-700"
             :class="{ 'correct': answer.isCorrect, 'wrong': !answer.isCorrect }"
@@ -22,7 +22,7 @@ function getUnansweredCount() {
 </template>
 
 <style scoped>
-    .container {
+    .res-container {
         position: absolute;
         width: 100%;
         height: 105%;
@@ -32,19 +32,20 @@ function getUnansweredCount() {
         display: flex;
         justify-content: center;
         align-items: flex-end;
+        margin-top: -15px;
     }
     .middle-container {
         margin-top: -20px;
         width: 100%;
-        height: 25px;
+        height: 20px;
         display: flex;
         justify-content: center;
         align-items: center;
         gap: 10px;
     }
     .answer {
-        width: 25px;
-        height: 25px;
+        width: 20px;
+        height: 20px;
         border-radius: 100px;
     }
 
