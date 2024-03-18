@@ -34,7 +34,7 @@ function devAutoJoin() {
 }
 
 onMounted(() => {
-    devAutoJoin();
+    //devAutoJoin();
 })
 
 </script>
@@ -45,6 +45,7 @@ onMounted(() => {
         <div v-if="wsStore.isConnected">
             <JoinRoomWindow v-if="!wsStore.isJoinedRoom" />
             <div v-else>
+                <div v-if="!gameStore.gameState.player"><p>Joined room <br> <b>{{ wsStore.joinedRoomId  }}</b></p></div>
                 <UserList />
                 <GameWindow v-if="gameStore.gameState.player"/>
                 <button v-else @click="wsStore.startGame()">Start game</button>
