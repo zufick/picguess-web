@@ -7,6 +7,8 @@ export type VirtualCanvas = {
     lines: Ref<VirtualCanvasLine[]>,
     linesToDelete: VirtualCanvasLine[],
     brush: Ref<VirtualCanvasBrush>,
+    paintBrush: Ref<string>,
+    eraserBrush: string,
     lastUserLines: {
         [key: string] : VirtualCanvasLine // userId -> line
     },
@@ -23,6 +25,8 @@ export type VirtualCanvas = {
     addReadyToMergeCanvas: (line: VirtualCanvasLine, canvas: HTMLCanvasElement) => void,
     mergeReadyCanvases: () => void,
     deleteReadyToDeleteLines: (mergedOnto: VirtualCanvasLine) => void,
+    selectPaintMode: () => void,
+    selectEraseMode: () => void,
 };
 
 

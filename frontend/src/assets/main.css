@@ -94,6 +94,10 @@ input[type="text"] {
   border: 2px solid rgb(52 211 153);
 }
 
+.selected-btn {
+  @apply border-stone-100 bg-stone-700;
+}
+
 .danger-btn-onhover:hover {
   @apply danger-btn;
 }
