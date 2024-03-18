@@ -184,7 +184,9 @@ func gameStartHandler(c *Client) {
 		c.send <- []byte("{ \"cmd\": \"draw_clear\", \"id\": \"\" }")
 	}
 
+	room.clearCanvasVotes = make(map[*Client]bool)
 	go gameStateHandler(room)
+	go room.broadcastRoomState()
 	room.game.Start()
 }
 
