@@ -10,6 +10,7 @@ import type {
 import DrawingCanvasLayer from "./DrawingCanvasLayer.vue";
 import DrawingBrushPreview from "./DrawingBrushPreview.vue";
 import DrawingCanvasClear from './DrawingCanvasClear.vue'
+import DrawingCanvasBrushSize from "./DrawingCanvasBrushSize.vue";
 
 const wsStore = useWebsocketStore();
 const drawingCanvas = ref<InstanceType<typeof HTMLCanvasElement>>();
@@ -283,9 +284,7 @@ provide('virtualCanvas', virtualCanvas)
                     <path d="M9 21H21" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
                 </svg>
             </button>
-            <input name="brush_radio" type="radio" class="small-radio" style="width: 50px; height: 50px;" v-model="virtualCanvas.brush.value.width" value="15">
-            <input name="brush_radio" type="radio" class="middle-radio" style="width: 50px; height: 50px;" v-model="virtualCanvas.brush.value.width" value="25">
-            <input name="brush_radio" type="radio" style="width: 50px; height: 50px;"v-model="virtualCanvas.brush.value.width" value="50">
+            <DrawingCanvasBrushSize v-model="virtualCanvas.brush.value.width"/>
             <button @click="undoClicked">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 15.75 3 12m0 0 3.75-3.75M3 12h18" />
