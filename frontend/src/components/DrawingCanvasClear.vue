@@ -42,13 +42,13 @@ const wsStore = useWebsocketStore();
                 <div class="flex flex-col items-center gap-4 appear-anim rounded-md border-2 border-stone-700 py-2 bg-stone-900 vote-anim" >
                     <p style="width: 60px; text-align: center;     font-size: .8rem;" class="break-words">Vote: Clear canvas?</p>
                     <div class="flex gap-4 px-8">
-                        <button class="danger-btn-onhover w-6 flex flex-col items-center justify-center" @click="drawClearVoteClicked(true)" :class="{'danger-btn': getOwnVoteResult()}">
+                        <button class="success-btn-onhover w-6 flex flex-col items-center justify-center" @click="drawClearVoteClicked(true)" :class="{'success-btn': getOwnVoteResult()}">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
                             <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
                             </svg>
                         </button>
 
-                        <button class="success-btn-onhover w-6 flex flex-col items-center justify-center" @click="drawClearVoteClicked(false)" :class="{'success-btn': isVoteSent() ? !getOwnVoteResult() : false}">
+                        <button class="danger-btn-onhover w-6 flex flex-col items-center justify-center" @click="drawClearVoteClicked(false)" :class="{'danger-btn': isVoteSent() ? !getOwnVoteResult() : false}">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
                             </svg>

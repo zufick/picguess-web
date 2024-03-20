@@ -9,6 +9,7 @@ export type VirtualCanvas = {
     brush: Ref<VirtualCanvasBrush>,
     paintBrush: Ref<string>,
     eraserBrush: string,
+    brushMode: Ref<VirtualCanvasBrushMode>,
     lastUserLines: {
         [key: string] : VirtualCanvasLine // userId -> line
     },
@@ -47,5 +48,7 @@ export type VirtualCanvasBrush = {
     color: string,
     width: number,
     point: VirtualCanvasDrawPoint,
-    visible: boolean
+    visible: boolean,
 }
+
+export enum VirtualCanvasBrushMode { Paint, Erase };
