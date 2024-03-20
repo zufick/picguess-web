@@ -311,7 +311,7 @@ provide('virtualCanvas', virtualCanvas)
         width: 1024px;
         height: 768px;
         position: relative;
-        user-select: none; /* Standard syntax */
+        user-select: none;
     }
 
     .canvas-bg {

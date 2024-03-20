@@ -35,7 +35,7 @@ function devAutoJoin() {
 }
 
 onMounted(() => {
-    //devAutoJoin();
+    devAutoJoin();
 })
 
 </script>

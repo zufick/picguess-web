@@ -6,7 +6,7 @@ const menuOpened = ref(false)
 const model = defineModel({default: 25})
 
 let brushSizes: { [key: string]: number; }  = {
-    'small': 15,
+    'small': 10,
     'medium': 25,
     'large': 50
 }

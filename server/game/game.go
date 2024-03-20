@@ -83,11 +83,11 @@ func (g *Game) AnswerWord(p *Player, answer string) {
 	p.Opponent.OpponentResults = p.AnswerResults
 
 	if isCorrect {
-		p.Score += 1
-		p.Opponent.Score += 2
+		p.Score += 5
+		p.Opponent.Score += 10
 	} else {
-		p.Score -= 2
-		p.Opponent.Score -= 1
+		p.Score -= 10
+		p.Opponent.Score -= 5
 	}
 
 	if p.Score < 0 {

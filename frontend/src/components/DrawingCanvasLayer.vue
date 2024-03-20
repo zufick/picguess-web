@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { defineProps, ref, watch, type Ref, onMounted, inject } from "vue";
+import { defineProps, ref, watch, type Ref, onMounted, inject, Transition } from "vue";
 import type { 
     VirtualCanvas, 
     VirtualCanvasLine, 
@@ -19,6 +19,8 @@ const canvasLayer = {
     pendingDrawPoints: [] as VirtualCanvasDrawPoint[],
     lastDrawPoint: {} as VirtualCanvasDrawPoint,
     drawingInterval: 0,
+    isOpponentDrawing: ref(false),
+    opponentDrawingTimeout: 0,
     isBeingDrawn: true,
     drawPendingPoints() {
         if(this.line.userId != "local") {
@@ -68,9 +70,14 @@ const canvasLayer = {
                 if (this.pendingDrawPoints.length <= 0) {
                     clearInterval(this.drawingInterval);
                     this.drawingInterval = 0;
+                    this.opponentDrawingTimeout = setTimeout(() => {
+                        this.isOpponentDrawing.value = false;
+                    }, 250)
                     return;
                 }
 
+                clearTimeout(this.opponentDrawingTimeout);
+                this.isOpponentDrawing.value = true;
                 let point = this.pendingDrawPoints.shift();
 
                 if (this.lastDrawPoint.x && this.lastDrawPoint.y) {
@@ -158,8 +165,21 @@ const virtualCanvas = inject<VirtualCanvas>("virtualCanvas")
 
 
 <template>
-    <canvas class="layer" ref="drawingCanvas" height="768" width="1024" v-show="!props.line.undo">
-    </canvas>
+    <div>
+        <canvas class="layer" ref="drawingCanvas" height="768" width="1024" v-show="!props.line.undo">
+        </canvas>
+        <Transition name="brush-icon">
+        <div v-if="canvasLayer.isOpponentDrawing.value && props.line.newPoints && canvasLayer.pendingDrawPoints.length > 0 && props.line.newPoints[0]" class="brush-icon" :style="{
+            left: props.line.newPoints[0].x - 10 + 'px',
+            top: props.line.newPoints[0].y - 40 + 'px',
+        }">
+            <svg v-if="canvasLayer.pendingDrawPoints.length" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="blue" class="w-6 h-6" style="width: 100%; height: 100%;">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9.53 16.122a3 3 0 0 0-5.78 1.128 2.25 2.25 0 0 1-2.4 2.245 4.5 4.5 0 0 0 8.4-2.245c0-.399-.078-.78-.22-1.128Zm0 0a15.998 15.998 0 0 0 3.388-1.62m-5.043-.025a15.994 15.994 0 0 1 1.622-3.395m3.42 3.42a15.995 15.995 0 0 0 4.764-4.648l3.876-5.814a1.151 1.151 0 0 0-1.597-1.597L14.146 6.32a15.996 15.996 0 0 0-4.649 4.763m3.42 3.42a6.776 6.776 0 0 0-3.42-3.42" />
+            </svg>
+        </div>
+        </Transition>
+
+    </div>
 </template>
 
 <style scoped>
@@ -169,6 +189,25 @@ const virtualCanvas = inject<VirtualCanvas>("virtualCanvas")
         left: 0;
         pointer-events: none;
         z-index: 1;
-        color: black;
     }
+    .brush-icon {
+        position: absolute;
+        top: 0;
+        left: 0;
+        pointer-events: none;
+        width: 48px;
+        height: 48px;
+        z-index: 10;
+    }
+
+    .brush-icon-enter-active,
+    .brush-icon-leave-active {
+    transition: opacity 0.25s ease;
+    }
+
+    .brush-icon-enter-from,
+    .brush-icon-leave-to {
+    opacity: 0;
+    }
+
 </style>
